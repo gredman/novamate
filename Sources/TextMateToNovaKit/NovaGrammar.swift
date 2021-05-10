@@ -37,10 +37,15 @@ public struct NovaGrammar: Encodable {
     }
 
     public struct Scopes: Encodable {
-        let scope: [Scope]?
-        let include: [Include]?
+        let scope: [Scope]
+        let include: [Scope]
+        let cutOff: [Scope]
 
-        static let empty = Scopes(scope: [], include: [])
+        init(scopes: [Scope]) {
+            scope = scopes.filter(\.isScope)
+            include = scopes.filter(\.isInclude)
+            cutOff = scopes.filter(\.isCutOff)
+        }
     }
 
     public struct Collections: Encodable {
@@ -48,8 +53,7 @@ public struct NovaGrammar: Encodable {
 
         public struct Collection: Encodable, DynamicNodeEncoding {
             let name: String
-            let scope: [Scope]?
-            let include: [Include]?
+            let scope: Scope
 
             public static func nodeEncoding(for key: CodingKey) -> XMLEncoder.NodeEncoding {
                 switch key.stringValue {
@@ -60,37 +64,57 @@ public struct NovaGrammar: Encodable {
         }
     }
 
-    public struct Scope: Encodable, DynamicNodeEncoding {
-        let name: String?
-        let expression: Pattern?
-        let startsWith: Pattern?
-        let endsWith: Pattern?
-        let subscopes: Scopes?
+    public enum Scope: Encodable, DynamicNodeEncoding {
+        case match(Match)
+        case startEnd(StartEnd)
+        case cutOff(CutOff)
+        case include(Include)
 
-        var isEmpty: Bool {
-            let all: [Any?] = [
-                name,
-                expression,
-                startsWith,
-                endsWith,
-                subscopes
-            ]
-            return all.allSatisfy { $0 == nil }
+        var isScope: Bool {
+            switch self {
+            case .match, .startEnd:
+                return true
+            default:
+                return false
+            }
+        }
+
+        var isCutOff: Bool {
+            switch self {
+            case .cutOff:
+                return true
+            default:
+                return false
+            }
+        }
+
+        var isInclude: Bool {
+            switch self {
+            case .include:
+                return true
+            default:
+                return false
+            }
+        }
+
+        public func encode(to encoder: Encoder) throws {
+            switch self {
+            case let .match(match):
+                try match.encode(to: encoder)
+            case let .startEnd(startEnd):
+                try startEnd.encode(to: encoder)
+            case let .cutOff(cutOff):
+                try cutOff.encode(to: encoder)
+            case let .include(include):
+                try include.encode(to: encoder)
+            }
         }
 
         public static func nodeEncoding(for key: CodingKey) -> XMLEncoder.NodeEncoding {
             switch key.stringValue {
-            case "name": return .attribute
+            case "name", "syntax", "collection": return .attribute
             default: return .element
             }
-        }
-
-        enum CodingKeys: String, CodingKey {
-            case name
-            case expression = ""
-            case startsWith
-            case endsWith
-            case subscopes
         }
 
         public struct Pattern: Encodable {
@@ -118,6 +142,36 @@ public struct NovaGrammar: Encodable {
                     .attribute
                 }
             }
+        }
+
+        public struct Match: Encodable, DynamicNodeEncoding {
+            let name: String
+            let expression: Pattern
+
+            public static func nodeEncoding(for key: CodingKey) -> XMLEncoder.NodeEncoding {
+                switch key.stringValue {
+                case "name": return .attribute
+                default: return .element
+                }
+            }
+        }
+
+        public struct StartEnd: Encodable, DynamicNodeEncoding {
+            let name: String
+            let startsWith: Pattern
+            let endsWith: Pattern
+            let subscopes: Scopes
+
+            public static func nodeEncoding(for key: CodingKey) -> XMLEncoder.NodeEncoding {
+                switch key.stringValue {
+                case "name": return .attribute
+                default: return .element
+                }
+            }
+        }
+
+        public struct CutOff: Encodable {
+            let expression: Pattern
         }
     }
 

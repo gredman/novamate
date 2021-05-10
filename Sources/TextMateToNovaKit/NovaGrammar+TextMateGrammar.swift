@@ -1,12 +1,13 @@
+import Foundation
+
 public extension NovaGrammar {
     init(textMateGrammar: TextMateGrammar) {
         let scopes = textMateGrammar.patterns
-            .map(NovaGrammar.Scopes.init(rule:))
-            .reduce(NovaGrammar.Scopes.empty, (+))
+            .compactMap(NovaGrammar.Scope.init(rule:))
 
-        let collections = textMateGrammar.repository.map { keyValue -> NovaGrammar.Collections.Collection in
-            let scopes = NovaGrammar.Scopes(rule: keyValue.value)
-            return NovaGrammar.Collections.Collection(name: keyValue.key, scope: scopes.scope, include: scopes.include)
+        let collections = textMateGrammar.repository.compactMap { keyValue -> NovaGrammar.Collections.Collection? in
+            guard let scope = NovaGrammar.Scope(rule: keyValue.value) else { return nil }
+            return NovaGrammar.Collections.Collection(name: keyValue.key, scope: scope)
         }
         self.init(
             name: textMateGrammar.name,
@@ -19,48 +20,30 @@ public extension NovaGrammar {
                         priority: 1.0,
                         value: $0))
             },
-            scopes: scopes,
+            scopes: Scopes(scopes: scopes),
             collections: Collections(collection: collections))
     }
 }
 
-private extension NovaGrammar.Scopes {
-    init(rule: TextMateGrammar.Rule) {
+private extension NovaGrammar.Scope {
+    init?(rule: TextMateGrammar.Rule) {
         Console.debug("converting \(rule)")
-        let match = rule.match.map {
-            NovaGrammar.Scope.Pattern(expression: $0, captures: rule.captures)
-        }
-        let startsWith = rule.begin.map {
-            NovaGrammar.Scope.Pattern(expression: $0, captures: rule.beginCaptures)
-        }
-        let endsWith = rule.end.map {
-            NovaGrammar.Scope.Pattern(expression: $0, captures: rule.endCaptures)
-        }
-        let subscopes = rule.patterns.map {
-            $0.map {
-                NovaGrammar.Scopes(rule: $0)
-            }
-        }?.reduce(NovaGrammar.Scopes.empty, (+))
-        let include = rule.include.map {
-            NovaGrammar.Include(collection: $0)
-        }
 
-        let scope = NovaGrammar.Scope(
-            name: rule.name,
-            expression: match,
-            startsWith: startsWith,
-            endsWith: endsWith,
-            subscopes: subscopes)
-
-        self.init(
-            scope: scope.isEmpty ? nil : [scope],
-            include: include.map { [$0] })
-    }
-
-    static func +(lhs: Self, rhs: Self) -> NovaGrammar.Scopes {
-        let scope = (lhs.scope ?? []) + (rhs.scope ?? [])
-        let include = (lhs.include ?? []) + (rhs.include ?? [])
-        return NovaGrammar.Scopes(scope: scope, include: include)
+        let name = rule.name ?? UUID().uuidString
+        if let match = rule.match, rule.begin == nil, rule.end == nil, rule.include == nil {
+            let expression = Pattern(expression: match, captures: rule.captures)
+            self = .match(.init(name: name, expression: expression))
+        } else if let begin = rule.begin, let end = rule.end, rule.match == nil, rule.include == nil {
+            let startsWith = Pattern(expression: begin, captures: rule.beginCaptures)
+            let endsWith = Pattern(expression: end, captures: rule.endCaptures)
+            let subscopes = (rule.patterns ?? []).compactMap(NovaGrammar.Scope.init(rule:))
+            self = .startEnd(.init(name: name, startsWith: startsWith, endsWith: endsWith, subscopes: NovaGrammar.Scopes(scopes: subscopes)))
+        } else if let include = rule.include, rule.name == nil, rule.match == nil, rule.end == nil {
+            self = .include(.init(collection: include))
+        } else {
+            Console.error("unhandled rule \(rule)")
+            return nil
+        }
     }
 }
 
