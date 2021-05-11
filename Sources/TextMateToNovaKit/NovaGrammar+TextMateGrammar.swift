@@ -2,12 +2,17 @@ import Foundation
 
 public extension NovaGrammar {
     init(textMateGrammar: TextMateGrammar) {
+        Console.debug("converting top level patterns")
         let scopes = textMateGrammar.patterns
             .compactMap { NovaGrammar.Scope.init(rule: $0, prefix: textMateGrammar.scopeName) }
 
-        let collections = textMateGrammar.repository.compactMap { keyValue -> NovaGrammar.Collections.Collection? in
-            guard let scope = NovaGrammar.Scope(rule: keyValue.value, prefix: textMateGrammar.scopeName) else { return nil }
-            return NovaGrammar.Collections.Collection(name: keyValue.key, scope: scope)
+        Console.debug("converting repository")
+        let collections = textMateGrammar.repository.map { keyValue -> NovaGrammar.Collections.Collection in
+            let rules = keyValue.value.expandedPatterns
+            let scopes = rules.compactMap { rule -> NovaGrammar.Scope? in
+                NovaGrammar.Scope(rule: rule, prefix: textMateGrammar.scopeName)
+            }
+            return NovaGrammar.Collections.Collection(name: keyValue.key, scopes: scopes)
         }
         self.init(
             name: textMateGrammar.name,
@@ -22,6 +27,21 @@ public extension NovaGrammar {
             },
             scopes: Scopes(scopes: scopes),
             collections: Collections(collection: collections))
+    }
+}
+
+private extension TextMateGrammar.Rule {
+    var expandedPatterns: [TextMateGrammar.Rule] {
+        guard match == nil, begin == nil, end == nil, include == nil else {
+            return [self]
+        }
+
+        let renamedPatterns = (patterns ?? []).enumerated().map { (n, p) -> TextMateGrammar.Rule in
+            var renamed = p
+            renamed.name = p.name ?? name.map { "\($0).\(n)" }
+            return renamed
+        }
+        return renamedPatterns.flatMap(\.expandedPatterns)
     }
 }
 
@@ -40,7 +60,7 @@ private extension NovaGrammar.Scope {
                 NovaGrammar.Scope(rule: $0, prefix: prefix)
             }
             self = .startEnd(.init(name: name, startsWith: startsWith, endsWith: endsWith, subscopes: NovaGrammar.Scopes(scopes: subscopes)))
-        } else if let include = rule.include, rule.name == nil, rule.match == nil, rule.end == nil {
+        } else if let include = rule.include, rule.match == nil, rule.end == nil {
             self = .include(.init(collection: include))
         } else {
             Console.error("unhandled rule \(rule)")

@@ -9,7 +9,7 @@ public struct TextMateGrammar: Codable {
     public let repository: [String: Rule]
 
     public struct Rule: Codable {
-        let name: String?
+        var name: String?
         let contentName: String?
         let match, begin, end: String?
         let captures, beginCaptures, endCaptures: [Int: Capture]?

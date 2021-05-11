@@ -39,12 +39,10 @@ public struct NovaGrammar: Encodable {
     public struct Scopes: Encodable {
         let scope: [Scope]
         let include: [Scope]
-        let cutOff: [Scope]
 
         init(scopes: [Scope]) {
             scope = scopes.filter(\.isScope)
             include = scopes.filter(\.isInclude)
-            cutOff = scopes.filter(\.isCutOff)
         }
     }
 
@@ -53,7 +51,14 @@ public struct NovaGrammar: Encodable {
 
         public struct Collection: Encodable, DynamicNodeEncoding {
             let name: String
-            let scope: Scope
+            let scope: [Scope]?
+            let include: [Scope]?
+
+            init(name: String, scopes: [Scope]) {
+                self.name = name
+                scope = scopes.filter(\.isScope)
+                include = scopes.filter(\.isInclude)
+            }
 
             public static func nodeEncoding(for key: CodingKey) -> XMLEncoder.NodeEncoding {
                 switch key.stringValue {
@@ -67,21 +72,11 @@ public struct NovaGrammar: Encodable {
     public enum Scope: Encodable, DynamicNodeEncoding {
         case match(Match)
         case startEnd(StartEnd)
-        case cutOff(CutOff)
         case include(Include)
 
         var isScope: Bool {
             switch self {
             case .match, .startEnd:
-                return true
-            default:
-                return false
-            }
-        }
-
-        var isCutOff: Bool {
-            switch self {
-            case .cutOff:
                 return true
             default:
                 return false
@@ -103,8 +98,6 @@ public struct NovaGrammar: Encodable {
                 try match.encode(to: encoder)
             case let .startEnd(startEnd):
                 try startEnd.encode(to: encoder)
-            case let .cutOff(cutOff):
-                try cutOff.encode(to: encoder)
             case let .include(include):
                 try include.encode(to: encoder)
             }
@@ -165,10 +158,6 @@ public struct NovaGrammar: Encodable {
                 default: return .element
                 }
             }
-        }
-
-        public struct CutOff: Encodable {
-            let expression: Pattern
         }
     }
 
