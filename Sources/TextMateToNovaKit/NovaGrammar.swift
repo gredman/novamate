@@ -119,20 +119,7 @@ public struct NovaGrammar: Encodable {
 
         public struct Pattern: Encodable {
             let expression: String
-            let captures: [Capture]?
-
-            public enum CodingKeys: String, CodingKey {
-                case expression
-                case capture
-            }
-
-            public func encode(to encoder: Encoder) throws {
-                var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(expression, forKey: .expression)
-                for capture in captures ?? [] {
-                    try container.encode(capture, forKey: .capture)
-                }
-            }
+            let capture: [Capture]?
 
             public struct Capture: Encodable, DynamicNodeEncoding {
                 let number: Int
@@ -146,12 +133,22 @@ public struct NovaGrammar: Encodable {
 
         public struct Match: Encodable, DynamicNodeEncoding {
             let name: String?
-            let expression: Pattern
+            let expression: String
+            let capture: [Capture]?
 
             public static func nodeEncoding(for key: CodingKey) -> XMLEncoder.NodeEncoding {
                 switch key.stringValue {
                 case "name": return .attribute
                 default: return .element
+                }
+            }
+
+            public struct Capture: Encodable, DynamicNodeEncoding {
+                let number: Int
+                let name: String?
+
+                public static func nodeEncoding(for key: CodingKey) -> XMLEncoder.NodeEncoding {
+                    .attribute
                 }
             }
         }
