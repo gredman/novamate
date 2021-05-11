@@ -145,7 +145,7 @@ public struct NovaGrammar: Encodable {
         }
 
         public struct Match: Encodable, DynamicNodeEncoding {
-            let name: String
+            let name: String?
             let expression: Pattern
 
             public static func nodeEncoding(for key: CodingKey) -> XMLEncoder.NodeEncoding {
@@ -157,7 +157,7 @@ public struct NovaGrammar: Encodable {
         }
 
         public struct StartEnd: Encodable, DynamicNodeEncoding {
-            let name: String
+            let name: String?
             let startsWith: Pattern
             let endsWith: Pattern
             let subscopes: Scopes
