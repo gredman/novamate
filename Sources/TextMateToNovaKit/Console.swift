@@ -1,21 +1,31 @@
 import Foundation
 
 public struct Console {
-    private static let encoding = String.Encoding.utf8
+    public static var debug = false
 
     public static func output(_ string: String) {
-        FileHandle.standardOutput.write(string.data(using: Self.encoding)!)
-        FileHandle.standardOutput.write("\n".data(using: Self.encoding)!)
+        FileHandle.standardOutput.write(string)
+        FileHandle.standardOutput.write("\n")
     }
 
     public static func error(_ string: String) {
-        FileHandle.standardError.write(string.data(using: Self.encoding)!)
-        FileHandle.standardError.write("\n".data(using: Self.encoding)!)
+        FileHandle.standardError.write("***")
+        FileHandle.standardError.write(string)
+        FileHandle.standardError.write("\n")
     }
 
     public static func debug(_ string: String) {
-        FileHandle.standardError.write("[".data(using: Self.encoding)!)
-        FileHandle.standardError.write(string.data(using: Self.encoding)!)
-        FileHandle.standardError.write("]\n".data(using: Self.encoding)!)
+        guard debug else { return }
+        FileHandle.standardError.write("[")
+        FileHandle.standardError.write(string)
+        FileHandle.standardError.write("]\n\n")
+    }
+}
+
+private extension FileHandle {
+    private static let encoding = String.Encoding.utf8
+
+    func write(_ text: String) {
+        write(text.data(using: Self.encoding)!)
     }
 }

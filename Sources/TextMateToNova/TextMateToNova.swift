@@ -18,17 +18,24 @@ struct TextMateToNova: ParsableCommand {
 
     @Option(help: "Input .tmLanguage file") var input: URL
 
+    @Flag(help: "Print debug info to stderr") var debug: Bool = false
+
     func run() throws {
         do {
+            Console.debug = debug
+
             let textmate = try TextMateGrammar(url: input)
+            Console.debug("loaded grammar \(textmate)")
+
             let converted = NovaGrammar(textMateGrammar: textmate)
+            Console.debug("converted converted \(converted)")
+
             let encoder = XMLEncoder()
             encoder.keyEncodingStrategy = .convertToKebabCase
             encoder.prettyPrintIndentation = .spaces(4)
             encoder.outputFormatting = [.prettyPrinted]
+
             let data = try encoder.encode(converted, withRootKey: "syntax")
-            // Console.output("loaded grammar \(textmate)")
-            // Console.output("converted converted \(converted)")
             Console.output("\(String(data: data, encoding: .utf8)!)")
         } catch {
             Console.error("failed: \(error.localizedDescription) \(type(of: error))")
