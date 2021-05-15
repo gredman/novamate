@@ -7,13 +7,15 @@ public extension NovaGrammar {
             .compactMap { NovaGrammar.Scope(rule: $0, prefix: textMateGrammar.scopeName) }
 
         Console.debug("converting repository")
-        let collections = textMateGrammar.repository.map { keyValue -> NovaGrammar.Collections.Collection in
-            let rules = keyValue.value.expandedPatterns
-            let scopes = rules.compactMap { rule -> NovaGrammar.Scope? in
-                NovaGrammar.Scope(rule: rule, prefix: textMateGrammar.scopeName)
+        let collections = textMateGrammar.repository
+            .sorted(by: \.key)
+            .map { keyValue -> NovaGrammar.Collections.Collection in
+                let rules = keyValue.value.expandedPatterns
+                let scopes = rules.compactMap { rule -> NovaGrammar.Scope? in
+                    NovaGrammar.Scope(rule: rule, prefix: textMateGrammar.scopeName)
+                }
+                return NovaGrammar.Collections.Collection(name: keyValue.key, scopes: scopes)
             }
-            return NovaGrammar.Collections.Collection(name: keyValue.key, scopes: scopes)
-        }
         self.init(
             name: textMateGrammar.name,
             meta: Meta(
