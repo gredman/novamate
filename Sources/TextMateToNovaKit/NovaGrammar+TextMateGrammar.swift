@@ -73,7 +73,7 @@ private extension NovaGrammar.Scope {
 private extension NovaGrammar.Scope.Pattern {
     init(expression: String, captures: [Int: TextMateGrammar.Rule.Capture]?, prefix: String) {
         self.expression = expression
-        self.capture = captures?.map { keyValue in
+        self.capture = captures?.sorted(by: \.key).map { keyValue in
             Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.textMateGroupNamesReplaced })
         }
     }
@@ -83,7 +83,7 @@ private extension NovaGrammar.Scope.Match {
     init(name: String?, expression: String, captures: [Int: TextMateGrammar.Rule.Capture]?, prefix: String) {
         self.name = name.map { prefix + "." + $0 }
         self.expression = expression
-        self.capture = captures?.map { keyValue in
+        self.capture = captures?.sorted(by: \.key).map { keyValue in
             Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.textMateGroupNamesReplaced })
         }
     }
@@ -109,5 +109,13 @@ private extension String {
         Self.replacements.reduce(self) { result, pair in
             result.replacingOccurrences(of: pair.0, with: pair.1)
         }
+    }
+}
+
+private extension Collection {
+    func sorted<Value: Comparable>(by keyPath: KeyPath<Element, Value>) -> [Element] {
+        sorted(by: { x, y in
+            x[keyPath: keyPath] < y[keyPath: keyPath]
+        })
     }
 }
