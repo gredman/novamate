@@ -4,19 +4,8 @@ import XMLCoder
 
 import TextMateToNovaKit
 
-extension URL: ExpressibleByArgument {
-    public init?(argument: String) {
-        self.init(fileURLWithPath: argument)
-    }
-}
-
-struct TextMateToNova: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "tm2nova",
-        abstract: "Convert TextMate language grammars to Nova",
-        version: "0.0.0")
-
-    @Option(help: "Input .tmLanguage file") var input: URL
+struct ConvertLanguage: ParsableCommand {
+    @Option(help: "Path to .tmLanguage file") var languageFile: URL
 
     @Flag(help: "Print debug info to stderr") var debug: Bool = false
 
@@ -24,11 +13,11 @@ struct TextMateToNova: ParsableCommand {
         do {
             Console.debug = debug
 
-            let textmate = try TextMateGrammar(url: input)
+            let textmate = try TextMateGrammar(url: languageFile)
             Console.debug("loaded grammar \(textmate)")
 
             let converted = NovaGrammar(textMateGrammar: textmate)
-            Console.debug("converted converted \(converted)")
+            Console.debug("converted \(converted)")
 
             let encoder = XMLEncoder()
             encoder.keyEncodingStrategy = .convertToKebabCase

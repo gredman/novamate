@@ -113,11 +113,3 @@ private extension String {
         }
     }
 }
-
-private extension Collection {
-    func sorted<Value: Comparable>(by keyPath: KeyPath<Element, Value>) -> [Element] {
-        sorted(by: { x, y in
-            x[keyPath: keyPath] < y[keyPath: keyPath]
-        })
-    }
-}

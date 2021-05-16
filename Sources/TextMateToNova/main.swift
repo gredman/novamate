@@ -1,1 +1,1 @@
-TextMateToNova.main()
+Novanate.main()
