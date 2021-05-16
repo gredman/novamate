@@ -1,7 +1,10 @@
 import Foundation
 
 public extension NovaGrammar {
-    init(textMateGrammar: TextMateGrammar) {
+    init(settings: TextMateBundle.Settings = .init(), textMateGrammar: TextMateGrammar) {
+        let brackets = settings.highlightPairs.map { pair in Pairs.Pair(open: pair.0, close: pair.1) }
+        let surroundingPairs = settings.smartTypingPairs.map { pair in Pairs.Pair(open: pair.0, close: pair.1) }
+
         Console.debug("converting top level patterns")
         let scopes = textMateGrammar.patterns
             .compactMap { NovaGrammar.Scope(rule: $0, prefix: textMateGrammar.scopeName) }
@@ -21,12 +24,11 @@ public extension NovaGrammar {
             meta: Meta(
                 name: textMateGrammar.name,
                 preferredFileExtension: textMateGrammar.fileTypes.first),
-            detectors: textMateGrammar.fileTypes.map {
-                Detector(
-                    extension: Detector.Extension(
-                        priority: 1.0,
-                        value: $0))
-            },
+            detectors: Detectors(extension: textMateGrammar.fileTypes.map {
+                Detectors.Extension(priority: 1.0, value: $0)
+            }),
+            brackets: Pairs(pair: brackets),
+            surroundingPairs: Pairs(pair: surroundingPairs),
             scopes: Scopes(scopes: scopes),
             collections: Collections(collection: collections))
     }

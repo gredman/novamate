@@ -37,7 +37,7 @@ struct ConvertBundle: ParsableCommand {
         let textmate = try TextMateGrammar(url: grammarURL)
         Console.debug("loaded grammar \(textmate)")
 
-        let converted = NovaGrammar(textMateGrammar: textmate)
+        let converted = NovaGrammar(settings: textMateBundle.settings, textMateGrammar: textmate)
         Console.debug("converted \(converted)")
 
         let encoder = XMLEncoder()
