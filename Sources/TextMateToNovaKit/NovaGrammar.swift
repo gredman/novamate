@@ -5,7 +5,9 @@ import XMLCoder
 public struct NovaGrammar: Encodable {
     let name: String
     let meta: Meta
-    let detectors: [Detector]
+    let detectors: Detectors
+    let brackets: Pairs
+    let surroundingPairs: Pairs
     let scopes: Scopes
     let collections: Collections
 
@@ -15,8 +17,8 @@ public struct NovaGrammar: Encodable {
         let preferredFileExtension: String?
     }
 
-    public struct Detector: Encodable {
-        let `extension`: Extension
+    public struct Detectors: Encodable {
+        let `extension`: [Extension]
 
         public struct Extension: Codable, DynamicNodeEncoding {
             let priority: Double
@@ -32,6 +34,18 @@ public struct NovaGrammar: Encodable {
                 case CodingKeys.priority: return .attribute
                 default: return .element
                 }
+            }
+        }
+    }
+
+    public struct Pairs: Encodable {
+        let pair: [Pair]
+
+        public struct Pair: Encodable, DynamicNodeEncoding {
+            let open, close: String
+
+            public static func nodeEncoding(for key: CodingKey) -> XMLEncoder.NodeEncoding {
+                .attribute
             }
         }
     }
