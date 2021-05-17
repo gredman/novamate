@@ -4,10 +4,6 @@ import XMLCoder
 
 import NovamateKit
 
-private struct ConversionError: LocalizedError {
-    let errorDescription: String?
-}
-
 struct ConvertTextMateBundle: ParsableCommand {
     @Option(help: "Path to .tmbundle file") var bundle: URL
     @Option(help: "Name of language in bundle") var languageName: String?
