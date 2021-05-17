@@ -5,7 +5,7 @@ import XMLCoder
 import NovamateKit
 
 struct ConvertLanguage: ParsableCommand {
-    @Option(help: "Path to .tmLanguage file") var languageFile: URL
+    @Argument(help: "Path to .tmLanguage file") var languageFile: URL
 
     @Flag(help: "Print debug info to stderr") var debug: Bool = false
 

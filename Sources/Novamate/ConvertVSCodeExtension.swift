@@ -7,7 +7,7 @@ import NovamateKit
 struct ConvertVSCodeExtension: ParsableCommand {
     static let configuration = CommandConfiguration(commandName: "convert-extension")
 
-    @Argument(help: "Path to VS code extension") var `extension`: URL
+    @Argument(help: "Path to VS code extension") var path: URL
     @Option(help: "Name of language in extension") var languageName: String?
 
     @Flag(help: "Print debug info to stderr") var debug: Bool = false
@@ -15,7 +15,7 @@ struct ConvertVSCodeExtension: ParsableCommand {
     func run() throws {
         Console.debug = debug
 
-        let vsCodeExtension = try VSCodeExtension(url: `extension`)
+        let vsCodeExtension = try VSCodeExtension(url: path)
         Console.debug("loaded extension \(vsCodeExtension)")
 
         let grammarURL: URL
@@ -23,16 +23,16 @@ struct ConvertVSCodeExtension: ParsableCommand {
             guard let grammar = vsCodeExtension.contributes.grammars.first(where: { grammar in
                 grammar.language == languageName
             }) else {
-                throw ConversionError(errorDescription: "no language named \(languageName) in extension \(`extension`.absoluteString)")
+                throw ConversionError(errorDescription: "no language named \(languageName) in extension \(path.absoluteString)")
             }
-            grammarURL = `extension`.appendingPathComponent(grammar.path)
+            grammarURL = path.appendingPathComponent(grammar.path)
         } else if vsCodeExtension.contributes.grammars.isEmpty {
-            throw ConversionError(errorDescription: "no languages in \(`extension`.absoluteString)")
+            throw ConversionError(errorDescription: "no languages in \(path.absoluteString)")
         } else if vsCodeExtension.contributes.grammars.count > 1 {
-            throw ConversionError(errorDescription: "multiple languages in \(`extension`.absoluteString), please specify which")
+            throw ConversionError(errorDescription: "multiple languages in \(path.absoluteString), please specify which")
         } else {
-            let path = vsCodeExtension.contributes.grammars.first!.path
-            grammarURL = `extension`.appendingPathComponent(path)
+            let grammarPath = vsCodeExtension.contributes.grammars.first!.path
+            grammarURL = path.appendingPathComponent(grammarPath)
         }
 
         Console.debug("loading grammar from \(grammarURL)")

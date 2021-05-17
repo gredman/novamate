@@ -5,7 +5,7 @@ import XMLCoder
 import NovamateKit
 
 struct ConvertTextMateBundle: ParsableCommand {
-    @Option(help: "Path to .tmbundle file") var bundle: URL
+    @Argument(help: "Path to .tmbundle file") var bundle: URL
     @Option(help: "Name of language in bundle") var languageName: String?
 
     @Flag(help: "Print debug info to stderr") var debug: Bool = false
