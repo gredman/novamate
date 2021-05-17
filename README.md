@@ -1,10 +1,10 @@
-# tm2nova
+# novamate
 
 Convert TextMate-style language grammar to a basic syntax for Panic's Nova editor.
 
 ## Usage
 
-> swift run tm2nova [--debug] --input <path/to/somelanguage.tmLanguage>
+> swift run novamate [--debug] --input <path/to/somelanguage.tmLanguage>
 
 ## TODO
 

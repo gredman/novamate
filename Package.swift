@@ -3,10 +3,10 @@
 import PackageDescription
 
 let package = Package(
-    name: "tm2nova",
+    name: "novamate",
     platforms: [.macOS(.v11)],
     products: [
-        .executable(name: "tm2nova", targets: ["TextMateToNova"])
+        .executable(name: "novamate", targets: ["Novamate"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMajor(from: "0.4.0")),
@@ -16,13 +16,13 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "TextMateToNovaKit",
+            name: "NovamateKit",
             dependencies: ["XMLCoder"]),
         .target(
-            name: "TextMateToNova",
-            dependencies: ["TextMateToNovaKit", .product(name: "ArgumentParser", package: "swift-argument-parser")]),
+            name: "Novamate",
+            dependencies: ["NovamateKit", .product(name: "ArgumentParser", package: "swift-argument-parser")]),
         .testTarget(
-            name: "TextMateToNovaTests",
-            dependencies: ["TextMateToNovaKit"]),
+            name: "NovamateTests",
+            dependencies: ["NovamateKit"]),
     ]
 )

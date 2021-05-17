@@ -2,7 +2,7 @@ import ArgumentParser
 import Foundation
 import XMLCoder
 
-import TextMateToNovaKit
+import NovamateKit
 
 struct ConvertLanguage: ParsableCommand {
     @Option(help: "Path to .tmLanguage file") var languageFile: URL

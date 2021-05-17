@@ -4,9 +4,9 @@ private struct ValidationError: LocalizedError {
     let errorDescription: String
 }
 
-struct Novanate: ParsableCommand {
+struct Novamate: ParsableCommand {
     static let configuration = CommandConfiguration(
-        commandName: "tm2nova",
+        commandName: "novamate",
         abstract: "Convert TextMate language grammars to Nova",
         version: "0.0.0",
         subcommands: [

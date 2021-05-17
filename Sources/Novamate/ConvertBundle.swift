@@ -2,7 +2,7 @@ import ArgumentParser
 import Foundation
 import XMLCoder
 
-import TextMateToNovaKit
+import NovamateKit
 
 private struct ConversionError: LocalizedError {
     let errorDescription: String?
