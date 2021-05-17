@@ -4,8 +4,8 @@ Convert TextMate-style language grammar to a basic syntax for Panic's Nova edito
 
 ## Usage
 
-> swift run novamate convert-language [--debug] --language-file <path/to/somelanguage.tmLanguage>
-> swift run novamate convert-bundle --bundle <path/to/somebundle.tmbundle> --language-name <some language>
+> swift run novamate textmate convert-language [--debug] --language-file <path/to/somelanguage.tmLanguage>
+> swift run novamate textmate convert-bundle --bundle <path/to/somebundle.tmbundle> --language-name <some language>
 
 ## TODO
 
