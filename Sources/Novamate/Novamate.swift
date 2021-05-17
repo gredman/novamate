@@ -7,10 +7,11 @@ private struct ValidationError: LocalizedError {
 struct Novamate: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "novamate",
-        abstract: "Convert TextMate language grammars to Nova",
+        abstract: "Convert language grammars to Nova",
         version: "0.0.0",
         subcommands: [
-            TextMate.self
+            TextMate.self,
+            VSCode.self
         ])
 }
 
@@ -19,7 +20,16 @@ struct TextMate: ParsableCommand {
         commandName: "textmate",
         abstract: "Convert TextMate language grammars to Nova",
         subcommands: [
-            ConvertBundle.self,
+            ConvertTextMateBundle.self,
             ConvertLanguage.self
+        ])
+}
+
+struct VSCode: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "vscode",
+        abstract: "Convert VS Code language extensions to Nova",
+        subcommands: [
+            ConvertVSCodeExtension.self
         ])
 }
