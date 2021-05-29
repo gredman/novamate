@@ -1,5 +1,5 @@
 public extension NovaGrammar {
-    init(extension: VSCodeExtension, grammar: VSCodeGrammar) {
+    init(extension: VSCodeExtension, language: VSCodeExtension.Contributes.Language, grammar: VSCodeGrammar) {
         Console.debug("converting top level patterns")
         let scopes = [NovaGrammar.Scope](
             patterns: grammar.patterns,
@@ -8,15 +8,15 @@ public extension NovaGrammar {
         Console.debug("converting repository")
         let collections = [NovaGrammar.Collections.Collection](repository: grammar.repository, scopeName: grammar.scopeName)
 
-        let language = `extension`.contributes.languages.first(where: { $0.id == grammar.name })
-        let extensions = language?.extensions ?? []
+        Console.debug("languages: \(`extension`.contributes.languages)")
+        Console.debug("grammar: \(grammar)")
 
         self.init(
             name: grammar.name,
             meta: Meta(
                 name: grammar.name,
-                preferredFileExtension: extensions.first),
-            detectors: Detectors(extension: extensions.map {
+                preferredFileExtension: language.extensions.first),
+            detectors: Detectors(extension: language.extensions.map {
                 Detectors.Extension(priority: 1.0, value: $0)
             }),
             brackets: Pairs(pair: []),

@@ -14,15 +14,15 @@ public struct NovaGrammar: Encodable {
     public struct Meta: Encodable {
         let name: String
         let type = "compiled"
-        let preferredFileExtension: String?
+        @TrimmedOptional(characterSet: CharacterSet(charactersIn: ".")) var preferredFileExtension: String? = nil
     }
 
     public struct Detectors: Encodable {
         let `extension`: [Extension]
 
-        public struct Extension: Codable, DynamicNodeEncoding {
+        public struct Extension: Encodable, DynamicNodeEncoding {
             let priority: Double
-            let value: String
+            @TrimmedOptional(characterSet: CharacterSet(charactersIn: ".")) var value: String? = nil
 
             enum CodingKeys: String, CodingKey {
                 case priority
@@ -202,6 +202,19 @@ public struct Trimmed: Encodable {
 
     public init(wrappedValue: String, characterSet: CharacterSet) {
         self.wrappedValue = wrappedValue.trimmingCharacters(in: characterSet)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        try wrappedValue.encode(to: encoder)
+    }
+}
+
+@propertyWrapper
+public struct TrimmedOptional: Encodable {
+    public let wrappedValue: String?
+
+    public init(wrappedValue: String?, characterSet: CharacterSet) {
+        self.wrappedValue = wrappedValue?.trimmingCharacters(in: characterSet)
     }
 
     public func encode(to encoder: Encoder) throws {
