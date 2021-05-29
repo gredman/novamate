@@ -6,19 +6,13 @@ public extension NovaGrammar {
         let surroundingPairs = settings.smartTypingPairs.map { pair in Pairs.Pair(open: pair.0, close: pair.1) }
 
         Console.debug("converting top level patterns")
-        let scopes = textMateGrammar.patterns
-            .compactMap { NovaGrammar.Scope(rule: $0, prefix: textMateGrammar.scopeName) }
+        let scopes = [NovaGrammar.Scope](
+            patterns: textMateGrammar.patterns,
+            scopeName: textMateGrammar.scopeName)
 
         Console.debug("converting repository")
-        let collections = textMateGrammar.repository
-            .sorted(by: \.key)
-            .map { keyValue -> NovaGrammar.Collections.Collection in
-                let rules = keyValue.value.expandedPatterns
-                let scopes = rules.compactMap { rule -> NovaGrammar.Scope? in
-                    NovaGrammar.Scope(rule: rule, prefix: textMateGrammar.scopeName)
-                }
-                return NovaGrammar.Collections.Collection(name: keyValue.key, scopes: scopes)
-            }
+        let collections = [NovaGrammar.Collections.Collection](repository: textMateGrammar.repository, scopeName: textMateGrammar.scopeName)
+
         self.init(
             name: textMateGrammar.name,
             meta: Meta(
@@ -31,6 +25,26 @@ public extension NovaGrammar {
             surroundingPairs: Pairs(pair: surroundingPairs),
             scopes: Scopes(scopes: scopes),
             collections: Collections(collection: collections))
+    }
+}
+
+extension Array where Element == NovaGrammar.Scope {
+    init(patterns: [TextMateGrammar.Rule], scopeName: String) {
+        self = patterns.compactMap { NovaGrammar.Scope(rule: $0, prefix: scopeName) }
+    }
+}
+
+extension Array where Element == NovaGrammar.Collections.Collection {
+    init(repository: [String: TextMateGrammar.Rule], scopeName: String) {
+        self = repository
+            .sorted(by: \.key)
+            .map { keyValue -> NovaGrammar.Collections.Collection in
+                let rules = keyValue.value.expandedPatterns
+                let scopes = rules.compactMap { rule -> NovaGrammar.Scope? in
+                    NovaGrammar.Scope(rule: rule, prefix: scopeName)
+                }
+                return NovaGrammar.Collections.Collection(name: keyValue.key, scopes: scopes)
+            }
     }
 }
 
