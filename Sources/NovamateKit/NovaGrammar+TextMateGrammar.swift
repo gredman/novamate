@@ -17,7 +17,8 @@ public extension NovaGrammar {
             name: textMateGrammar.name,
             meta: Meta(
                 name: textMateGrammar.name,
-                preferredFileExtension: textMateGrammar.fileTypes.first),
+                preferredFileExtension: textMateGrammar.fileTypes.first,
+                _disclaimer: nil),
             detectors: Detectors(extension: textMateGrammar.fileTypes.map {
                 Detectors.Extension(priority: 1.0, value: $0)
             }),

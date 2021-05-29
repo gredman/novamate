@@ -15,7 +15,8 @@ public extension NovaGrammar {
             name: grammar.name,
             meta: Meta(
                 name: grammar.name,
-                preferredFileExtension: language.extensions.first),
+                preferredFileExtension: language.extensions.first,
+                _disclaimer: disclaimer(extension: `extension`, language: language)),
             detectors: Detectors(extension: language.extensions.map {
                 Detectors.Extension(priority: 1.0, value: $0)
             }),
@@ -24,4 +25,11 @@ public extension NovaGrammar {
             scopes: Scopes(scopes: scopes),
             collections: Collections(collection: collections))
     }
+}
+
+private func disclaimer(
+    extension: VSCodeExtension,
+    language: VSCodeExtension.Contributes.Language
+) -> String {
+        "Converted from \"\(`extension`.repository.url)\", grammar \"\(language.id)\"."
 }

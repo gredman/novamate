@@ -1,7 +1,13 @@
 import Foundation
 
 public struct VSCodeExtension: Codable {
+    public let name: String
     public let contributes: Contributes
+    public let repository: Repository
+
+    public struct Repository: Codable {
+        public let url: String
+    }
 
     public struct Contributes: Codable {
         public let languages: [Language]

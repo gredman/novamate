@@ -15,6 +15,7 @@ public struct NovaGrammar: Encodable {
         let name: String
         let type = "compiled"
         @TrimmedOptional(characterSet: CharacterSet(charactersIn: ".")) var preferredFileExtension: String? = nil
+        let _disclaimer: String?
     }
 
     public struct Detectors: Encodable {
