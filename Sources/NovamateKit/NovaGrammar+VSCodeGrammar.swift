@@ -8,9 +8,6 @@ public extension NovaGrammar {
         Console.debug("converting repository")
         let collections = [NovaGrammar.Collections.Collection](repository: grammar.repository, scopeName: grammar.scopeName)
 
-        Console.debug("languages: \(`extension`.contributes.languages)")
-        Console.debug("grammar: \(grammar)")
-
         self.init(
             name: grammar.name,
             meta: Meta(

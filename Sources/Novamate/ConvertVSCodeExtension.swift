@@ -18,24 +18,29 @@ struct ConvertVSCodeExtension: ParsableCommand {
     mutating func validate() throws {
         let vsCodeExtension = try VSCodeExtension(url: extensionURL)
 
+        guard let languages = vsCodeExtension.contributes?.languages, !languages.isEmpty else {
+            throw ValidationError("no languages in \(extensionURL.standardizedFileURL.path)")
+        }
+        guard let grammars = vsCodeExtension.contributes?.grammars, !grammars.isEmpty else {
+            throw ValidationError("no grammars in \(extensionURL.standardizedFileURL.path)")
+        }
+
         let language: VSCodeExtension.Contributes.Language
         if let name = languageName {
-            if let lang = vsCodeExtension.language(withName: name) {
+            if let lang = languages.first(where: \.id, equalTo: name) {
                 language = lang
             } else {
-                throw ValidationError("no language named \(name) in extension \(extensionURL.standardizedFileURL.path). options are \(vsCodeExtension.formattedLanguageNames)")
+                throw ValidationError("no language named \(name) in extension \(extensionURL.standardizedFileURL.path). options are \(vsCodeExtension.formattedLanguageNames!)")
             }
         } else {
-            if vsCodeExtension.contributes.languages.count > 1 {
-                throw ValidationError("multiple languages in \(extensionURL.standardizedFileURL.path), please specify which. options are \(vsCodeExtension.formattedLanguageNames)")
-            } else if let lang = vsCodeExtension.contributes.languages.first {
-                language = lang
+            if languages.count > 1 {
+                throw ValidationError("multiple languages in \(extensionURL.standardizedFileURL.path), please specify which. options are \(vsCodeExtension.formattedLanguageNames!)")
             } else {
-                throw ValidationError("no languages in \(extensionURL.standardizedFileURL.path)")
+                language = languages.first!
             }
         }
 
-        guard let grammar = vsCodeExtension.grammar(withName: language.id) else {
+        guard let grammar = grammars.first(where: \.language, equalTo: language.id) else {
             throw ValidationError("no grammar found for language \(language.id)")
         }
 
@@ -62,16 +67,8 @@ struct ConvertVSCodeExtension: ParsableCommand {
 }
 
 private extension VSCodeExtension {
-    var formattedLanguageNames: String {
-        let names = contributes.languages
-        return ListFormatter().string(from: names)!
-    }
-
-    func grammar(withName name: String) -> Contributes.Grammar? {
-        contributes.grammars.first { $0.language == name }
-    }
-
-    func language(withName name: String) -> Contributes.Language? {
-        contributes.languages.first { $0.id == name }
+    var formattedLanguageNames: String? {
+        guard let names = contributes?.languages else { return nil }
+        return ListFormatter().string(from: names)
     }
 }
