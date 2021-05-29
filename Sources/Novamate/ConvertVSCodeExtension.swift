@@ -9,7 +9,8 @@ struct ConvertVSCodeExtension: ParsableCommand {
 
     @Argument(help: ArgumentHelp("Path to VS code extension", valueName: "path")) var extensionURL: URL
     @Option(help: "Name of language in extension") var languageName: String?
-    @Flag(help: "Print debug info to stderr") var debug: Bool = false
+    @Option(help: "Scope replacements of the form `from.scope.name:to.scope.name`") var replace = [ScopeReplacement]()
+    @Flag(help: "Print debug info to stderr") var debug = false
 
     private var vsCodeExtension: VSCodeExtension?
     private var language: VSCodeExtension.Contributes.Language?
