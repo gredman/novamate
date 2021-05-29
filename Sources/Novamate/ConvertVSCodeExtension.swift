@@ -11,14 +11,13 @@ struct ConvertVSCodeExtension: ParsableCommand {
     @Option(help: "Name of language in extension") var languageName: String?
     @Flag(help: "Print debug info to stderr") var debug: Bool = false
 
+    private var vsCodeExtension: VSCodeExtension?
     private var grammarURL: URL?
 
     mutating func validate() throws {
         let vsCodeExtension = try VSCodeExtension(url: extensionURL)
         if let languageName = languageName {
-            guard let grammar = vsCodeExtension.contributes.grammars.first(where: { grammar in
-                grammar.language == languageName
-            }) else {
+            guard let grammar = vsCodeExtension.grammar(withName: languageName) else {
                 throw ValidationError("no language named \(languageName) in extension \(extensionURL.standardizedFileURL.path). options are \(vsCodeExtension.formattedGrammarNames)")
             }
             grammarURL = extensionURL.appendingPathComponent(grammar.path)
@@ -30,6 +29,7 @@ struct ConvertVSCodeExtension: ParsableCommand {
             let grammarPath = vsCodeExtension.contributes.grammars.first!.path
             grammarURL = extensionURL.appendingPathComponent(grammarPath)
         }
+        self.vsCodeExtension = vsCodeExtension
     }
 
     func run() throws {
@@ -39,6 +39,13 @@ struct ConvertVSCodeExtension: ParsableCommand {
         Console.debug("loading grammar from \(grammarURL)")
         let grammar = try VSCodeGrammar(url: grammarURL)
         Console.debug("loaded grammar \(grammar)")
+
+        let converted = NovaGrammar(extension: vsCodeExtension!, grammar: grammar)
+        Console.debug("converted grammar \(converted)")
+
+        let encoder = XMLEncoder.forNovaGrammar()
+        let data = try encoder.encode(converted, withRootKey: "syntax")
+        Console.output(String(data: data, encoding: .utf8)!)
     }
 }
 
@@ -46,5 +53,9 @@ private extension VSCodeExtension {
     var formattedGrammarNames: String {
         let names = contributes.grammars.map(\.language)
         return ListFormatter().string(from: names)!
+    }
+
+    func grammar(withName name: String) -> Contributes.Grammar? {
+        contributes.grammars.first { $0.language == name }
     }
 }

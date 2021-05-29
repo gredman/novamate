@@ -18,11 +18,7 @@ struct ConvertLanguage: ParsableCommand {
         let converted = NovaGrammar(textMateGrammar: textmate)
         Console.debug("converted \(converted)")
 
-        let encoder = XMLEncoder()
-        encoder.keyEncodingStrategy = .convertToKebabCase
-        encoder.prettyPrintIndentation = .spaces(4)
-        encoder.outputFormatting = [.prettyPrinted]
-
+        let encoder = XMLEncoder.forNovaGrammar()
         let data = try encoder.encode(converted, withRootKey: "syntax")
         Console.output("\(String(data: data, encoding: .utf8)!)")
     }
