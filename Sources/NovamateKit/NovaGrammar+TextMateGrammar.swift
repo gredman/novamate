@@ -90,20 +90,20 @@ private extension NovaGrammar.Scope {
 
 private extension NovaGrammar.Scope.Pattern {
     init(expression: String, captures: [Int: TextMateGrammar.Rule.Capture]?, prefix: String) {
-        self.expression = expression
-        self.capture = captures?.sorted(by: \.key).map { keyValue in
+        let capture = captures?.sorted(by: \.key).map { keyValue in
             Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.textMateGroupNamesReplaced })
         }
+        self.init(expression: expression, capture: capture)
     }
 }
 
 private extension NovaGrammar.Scope.Match {
     init(name: String?, expression: String, captures: [Int: TextMateGrammar.Rule.Capture]?, prefix: String) {
-        self.name = name.map { prefix + "." + $0 }
-        self.expression = expression
-        self.capture = captures?.sorted(by: \.key).map { keyValue in
+        let name = name.map { prefix + "." + $0 }
+        let capture = captures?.sorted(by: \.key).map { keyValue in
             Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.textMateGroupNamesReplaced })
         }
+        self.init(name: name, expression: expression, capture: capture)
     }
 }
 

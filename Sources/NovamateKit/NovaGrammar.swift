@@ -125,7 +125,7 @@ public struct NovaGrammar: Encodable {
         }
 
         public struct Pattern: Encodable {
-            let expression: String
+            @SanitizedExpression var expression: String
             let capture: [Capture]?
 
             public struct Capture: Encodable, DynamicNodeEncoding {
@@ -140,7 +140,7 @@ public struct NovaGrammar: Encodable {
 
         public struct Match: Encodable, DynamicNodeEncoding {
             let name: String?
-            let expression: String
+            @SanitizedExpression var expression: String
             let capture: [Capture]?
 
             public static func nodeEncoding(for key: CodingKey) -> XMLEncoder.NodeEncoding {
@@ -206,5 +206,31 @@ public struct Trimmed: Encodable {
 
     public func encode(to encoder: Encoder) throws {
         try wrappedValue.encode(to: encoder)
+    }
+}
+
+@propertyWrapper
+public struct SanitizedExpression: Encodable {
+    private static let replacementRegex = try! SanitizingRegularExpression(pattern: "<(.*?)>", options: [])
+
+    public let wrappedValue: String
+
+    public init(wrappedValue: String) {
+        let range = NSRange(wrappedValue.startIndex..<wrappedValue.endIndex, in: wrappedValue)
+        self.wrappedValue = Self.replacementRegex.stringByReplacingMatches(in: wrappedValue, options: [], range: range, withTemplate: "")
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        try wrappedValue.encode(to: encoder)
+    }
+
+    private class SanitizingRegularExpression: NSRegularExpression {
+        override func replacementString(for match: NSTextCheckingResult, in string: String, offset: Int, template templ: String) -> String {
+            let matchRange = Range(match.range, in: string)!
+            let captureName = string[matchRange]
+            let replaced = captureName.replacingOccurrences(of: "-", with: "_")
+            Console.debug("replacing capture \(captureName) with \(replaced)")
+            return super.replacementString(for: match, in: string, offset: offset, template: replaced)
+        }
     }
 }
