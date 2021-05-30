@@ -7,7 +7,7 @@ public struct VSCodeLanguageConfiguration: Decodable {
 
     struct Comments: Decodable {
         let lineComment: String?
-        let blockComment: Pair
+        let blockComment: Pair?
     }
 
     struct Pair: Decodable {

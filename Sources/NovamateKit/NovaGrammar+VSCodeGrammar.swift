@@ -22,10 +22,21 @@ public extension NovaGrammar {
             .map {
                 Pairs.Pair(open: $0.first, close: $0.last)
             }
+
         let surroundingPairs = (configuration?.surroundingPairs ?? [])
             .map {
                 Pairs.Pair(open: $0.first, close: $0.last)
             }
+
+        let comments = configuration.map(\.comments).map {
+            Comments(
+                single: $0.lineComment.map(Comments.Expression.init(expression:)),
+                multiline: $0.blockComment.map {
+                    Comments.Multiline(
+                        startsWith: Comments.Expression(expression: $0.first),
+                        endsWith: Comments.Expression(expression: $0.last))
+                })
+        }
 
         self.init(
             name: grammar.name,
@@ -36,6 +47,7 @@ public extension NovaGrammar {
             detectors: Detectors(extension: language.extensions.map {
                 Detectors.Extension(priority: 1.0, value: $0)
             }),
+            comments: comments,
             brackets: Pairs(pair: brackets),
             surroundingPairs: Pairs(pair: surroundingPairs),
             scopes: Scopes(scopes: scopes),

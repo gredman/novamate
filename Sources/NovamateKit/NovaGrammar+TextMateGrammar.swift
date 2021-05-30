@@ -26,6 +26,7 @@ public extension NovaGrammar {
             detectors: Detectors(extension: textMateGrammar.fileTypes.map {
                 Detectors.Extension(priority: 1.0, value: $0)
             }),
+            comments: nil,    // TODO
             brackets: Pairs(pair: brackets),
             surroundingPairs: Pairs(pair: surroundingPairs),
             scopes: Scopes(scopes: scopes),

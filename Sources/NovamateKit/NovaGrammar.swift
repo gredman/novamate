@@ -6,6 +6,7 @@ public struct NovaGrammar: Encodable {
     let name: String
     let meta: Meta
     let detectors: Detectors
+    let comments: Comments?
     let brackets: Pairs
     let surroundingPairs: Pairs
     let scopes: Scopes
@@ -16,6 +17,20 @@ public struct NovaGrammar: Encodable {
         let type = "compiled"
         @TrimmedOptional(characterSet: CharacterSet(charactersIn: ".")) var preferredFileExtension: String? = nil
         let _disclaimer: String?
+    }
+
+    public struct Comments: Encodable {
+        let single: Expression?
+        let multiline: Multiline?
+
+        public struct Expression: Encodable {
+            let expression: String
+        }
+
+        public struct Multiline: Encodable {
+            let startsWith: Expression
+            let endsWith: Expression
+        }
     }
 
     public struct Detectors: Encodable {
