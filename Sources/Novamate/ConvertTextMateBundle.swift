@@ -5,9 +5,10 @@ import XMLCoder
 import NovamateKit
 
 struct ConvertTextMateBundle: ParsableCommand {
+    static let configuration = CommandConfiguration(commandName: "convert-bundle")
+
     @Argument(help: "Path to .tmbundle file") var bundle: URL
     @Option(help: "Name of language in bundle") var languageName: String?
-
     @OptionGroup var options: Options
 
     func run() throws {

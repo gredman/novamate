@@ -37,7 +37,7 @@ struct TextMate: ParsableCommand {
         abstract: "Convert TextMate language grammars to Nova",
         subcommands: [
             ConvertTextMateBundle.self,
-            ConvertLanguage.self
+            ConvertTextMateLanguage.self
         ])
 }
 

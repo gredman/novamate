@@ -9,7 +9,6 @@ struct ConvertVSCodeExtension: ParsableCommand {
 
     @Argument(help: ArgumentHelp("Path to VS code extension", valueName: "path")) var extensionURL: URL
     @Option(help: "Name of language in extension") var languageName: String?
-
     @OptionGroup var options: Options
 
     private var vsCodeExtension: VSCodeExtension?

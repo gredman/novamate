@@ -4,9 +4,10 @@ import XMLCoder
 
 import NovamateKit
 
-struct ConvertLanguage: ParsableCommand {
-    @Argument(help: "Path to .tmLanguage file") var languageFile: URL
+struct ConvertTextMateLanguage: ParsableCommand {
+    static let configuration = CommandConfiguration(commandName: "convert-language")
 
+    @Argument(help: "Path to .tmLanguage file") var languageFile: URL
     @OptionGroup var options: Options
 
     func run() throws {
