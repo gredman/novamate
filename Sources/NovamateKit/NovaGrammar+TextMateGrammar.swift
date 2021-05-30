@@ -1,17 +1,21 @@
 import Foundation
 
 public extension NovaGrammar {
-    init(settings: TextMateBundle.Settings = .init(), textMateGrammar: TextMateGrammar) {
+    init(settings: TextMateBundle.Settings = .init(), textMateGrammar: TextMateGrammar, replacements: [ScopeReplacement]) {
         let brackets = settings.highlightPairs.map { pair in Pairs.Pair(open: pair.0, close: pair.1) }
         let surroundingPairs = settings.smartTypingPairs.map { pair in Pairs.Pair(open: pair.0, close: pair.1) }
 
         Console.debug("converting top level patterns")
         let scopes = [NovaGrammar.Scope](
             patterns: textMateGrammar.patterns,
-            scopeName: textMateGrammar.scopeName)
+            scopeName: textMateGrammar.scopeName,
+            replacements: replacements)
 
         Console.debug("converting repository")
-        let collections = [NovaGrammar.Collections.Collection](repository: textMateGrammar.repository, scopeName: textMateGrammar.scopeName)
+        let collections = [NovaGrammar.Collections.Collection](
+            repository: textMateGrammar.repository,
+            scopeName: textMateGrammar.scopeName,
+            replacements: replacements)
 
         self.init(
             name: textMateGrammar.name,
@@ -30,19 +34,19 @@ public extension NovaGrammar {
 }
 
 extension Array where Element == NovaGrammar.Scope {
-    init(patterns: [TextMateGrammar.Rule], scopeName: String) {
-        self = patterns.compactMap { NovaGrammar.Scope(rule: $0, prefix: scopeName) }
+    init(patterns: [TextMateGrammar.Rule], scopeName: String, replacements: [ScopeReplacement]) {
+        self = patterns.compactMap { NovaGrammar.Scope(rule: $0, prefix: scopeName, replacements: replacements) }
     }
 }
 
 extension Array where Element == NovaGrammar.Collections.Collection {
-    init(repository: [String: TextMateGrammar.Rule], scopeName: String) {
+    init(repository: [String: TextMateGrammar.Rule], scopeName: String, replacements: [ScopeReplacement]) {
         self = repository
             .sorted(by: \.key)
             .map { keyValue -> NovaGrammar.Collections.Collection in
-                let rules = keyValue.value.expandedPatterns
+                let rules = keyValue.value.expandedPatterns(replacements: replacements)
                 let scopes = rules.compactMap { rule -> NovaGrammar.Scope? in
-                    NovaGrammar.Scope(rule: rule, prefix: scopeName)
+                    NovaGrammar.Scope(rule: rule, prefix: scopeName, replacements: replacements)
                 }
                 return NovaGrammar.Collections.Collection(name: keyValue.key, scopes: scopes)
             }
@@ -50,7 +54,7 @@ extension Array where Element == NovaGrammar.Collections.Collection {
 }
 
 private extension TextMateGrammar.Rule {
-    var expandedPatterns: [TextMateGrammar.Rule] {
+    func expandedPatterns(replacements: [ScopeReplacement]) -> [TextMateGrammar.Rule] {
         guard match == nil, begin == nil, end == nil, include == nil else {
             return [self]
         }
@@ -58,26 +62,32 @@ private extension TextMateGrammar.Rule {
         let renamedPatterns = (patterns ?? []).enumerated().map { (n, p) -> TextMateGrammar.Rule in
             var renamed = p
             renamed.name = p.name ?? name.map { "\($0).\(n)" }
-            renamed.name = renamed.name?.textMateGroupNamesReplaced
+            renamed.name = renamed.name?.applying(replacements: replacements)
             return renamed
         }
-        return renamedPatterns.flatMap(\.expandedPatterns)
+        return renamedPatterns.flatMap { $0.expandedPatterns(replacements: replacements) }
     }
 }
 
 private extension NovaGrammar.Scope {
-    init?(rule: TextMateGrammar.Rule, prefix: String) {
+    init?(rule: TextMateGrammar.Rule, prefix: String, replacements: [ScopeReplacement]) {
         Console.debug("converting \(rule)")
 
         if let match = rule.match, rule.begin == nil, rule.end == nil, rule.include == nil {
-            let match = Match(name: rule.name?.textMateGroupNamesReplaced, expression: match, captures: rule.captures, prefix: prefix)
+            let name = rule.name?.applying(replacements: replacements)
+            let match = Match(
+                name: name,
+                expression: match,
+                captures: rule.captures,
+                prefix: prefix,
+                replacements: replacements)
             self = .match(match)
         } else if let begin = rule.begin, let end = rule.end, rule.match == nil, rule.include == nil {
-            let name = rule.name.map { prefix + "." + $0 }?.textMateGroupNamesReplaced
-            let startsWith = Pattern(expression: begin, captures: rule.beginCaptures, prefix: prefix)
-            let endsWith = Pattern(expression: end, captures: rule.endCaptures, prefix: prefix)
+            let name = rule.name.map { prefix + "." + $0 }?.applying(replacements: replacements)
+            let startsWith = Pattern(expression: begin, captures: rule.beginCaptures, prefix: prefix, replacements: replacements)
+            let endsWith = Pattern(expression: end, captures: rule.endCaptures, prefix: prefix, replacements: replacements)
             let subscopes = (rule.patterns ?? []).compactMap {
-                NovaGrammar.Scope(rule: $0, prefix: prefix)
+                NovaGrammar.Scope(rule: $0, prefix: prefix, replacements: replacements)
             }
             self = .startEnd(.init(name: name, startsWith: startsWith, endsWith: endsWith, subscopes: NovaGrammar.Scopes(scopes: subscopes)))
         } else if let include = rule.include, rule.match == nil, rule.end == nil {
@@ -90,43 +100,32 @@ private extension NovaGrammar.Scope {
 }
 
 private extension NovaGrammar.Scope.Pattern {
-    init(expression: String, captures: [Int: TextMateGrammar.Rule.Capture]?, prefix: String) {
+    init(expression: String, captures: [Int: TextMateGrammar.Rule.Capture]?, prefix: String, replacements: [ScopeReplacement]) {
         let capture = captures?.sorted(by: \.key).map { keyValue in
-            Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.textMateGroupNamesReplaced })
+            Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.applying(replacements: replacements) })
         }
         self.init(expression: expression, capture: capture)
     }
 }
 
 private extension NovaGrammar.Scope.Match {
-    init(name: String?, expression: String, captures: [Int: TextMateGrammar.Rule.Capture]?, prefix: String) {
+    init(name: String?, expression: String, captures: [Int: TextMateGrammar.Rule.Capture]?, prefix: String, replacements: [ScopeReplacement]) {
         let name = name.map { prefix + "." + $0 }
         let capture = captures?.sorted(by: \.key).map { keyValue in
-            Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.textMateGroupNamesReplaced })
+            Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.applying(replacements: replacements) })
         }
         self.init(name: name, expression: expression, capture: capture)
     }
 }
 
 private extension String {
-    private static let replacements: [(String, String)] = [
-        ("constant.language", "value"),
-        ("constant.numeric", "value.number"),
-        ("entity.name.function", "identifier.function"),
-        ("entity.name.tag", "tag"),
-        ("entity.name.type", "identifier.type"),
-        ("storage", "keyword"),
-        ("variable.language", "identifier.core"),
-        ("variable.parameter", "identifier.argument")
-    ]
-
     private var groups: [Substring] {
         split(separator: ".")
     }
 
-    var textMateGroupNamesReplaced: String {
-        Self.replacements.reduce(self) { result, pair in
-            result.replacingOccurrences(of: pair.0, with: pair.1)
+    func applying(replacements: [ScopeReplacement]) -> String {
+        replacements.reduce(self) { result, replacement in
+            result.replacingOccurrences(of: replacement.from, with: replacement.to)
         }
     }
 }

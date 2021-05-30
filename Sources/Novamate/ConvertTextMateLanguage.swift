@@ -6,6 +6,7 @@ import NovamateKit
 
 struct ConvertLanguage: ParsableCommand {
     @Argument(help: "Path to .tmLanguage file") var languageFile: URL
+    @Option(help: "Scope replacements of the form `from.scope.name:to.scope.name`") var replace = [ScopeReplacement]()
 
     @Flag(help: "Print debug info to stderr") var debug: Bool = false
 
@@ -15,7 +16,7 @@ struct ConvertLanguage: ParsableCommand {
         let textmate = try TextMateGrammar(url: languageFile)
         Console.debug("loaded grammar \(textmate)")
 
-        let converted = NovaGrammar(textMateGrammar: textmate)
+        let converted = NovaGrammar(textMateGrammar: textmate, replacements: replace)
         Console.debug("converted \(converted)")
 
         let encoder = XMLEncoder.forNovaGrammar()
