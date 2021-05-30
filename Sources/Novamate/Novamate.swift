@@ -24,7 +24,7 @@ struct Novamate: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "novamate",
         abstract: "Convert language grammars to Nova",
-        version: "0.0.0",
+        version: "0.1.0",
         subcommands: [
             TextMate.self,
             VSCode.self
