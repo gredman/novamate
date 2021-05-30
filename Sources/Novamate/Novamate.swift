@@ -10,7 +10,14 @@ private struct ValidationError: LocalizedError {
 struct Options: ParsableArguments {
     @Option(help: "Scope replacements of the form `from.scope.name:to.scope.name`") var replace = [ScopeReplacement]()
 
-    @Flag(help: "Print debug info to stderr") var debug: Bool = false
+    @Flag(help: "Use default scope replacements") var defaultReplacements = false
+    @Flag(help: "Print debug info to stderr") var debug = false
+
+    mutating func validate() throws {
+        if defaultReplacements {
+            replace = replace + [ScopeReplacement].defaults
+        }
+    }
 }
 
 struct Novamate: ParsableCommand {
