@@ -15,6 +15,7 @@ struct ConvertVSCodeExtension: ParsableCommand {
     private var vsCodeExtension: VSCodeExtension?
     private var language: VSCodeExtension.Contributes.Language?
     private var grammarURL: URL?
+    private var configurationURL: URL?
 
     mutating func validate() throws {
         let vsCodeExtension = try VSCodeExtension(url: extensionURL)
@@ -48,6 +49,7 @@ struct ConvertVSCodeExtension: ParsableCommand {
         self.vsCodeExtension = vsCodeExtension
         self.language = language
         self.grammarURL = extensionURL.appendingPathComponent(grammar.path)
+        self.configurationURL = language.configuration.map(extensionURL.appendingPathComponent)
     }
 
     func run() throws {
@@ -57,8 +59,10 @@ struct ConvertVSCodeExtension: ParsableCommand {
         Console.debug("loading grammar from \(grammarURL)")
         let grammar = try VSCodeGrammar(url: grammarURL)
         Console.debug("loaded grammar \(grammar)")
+        let configuration = try configurationURL.map { try VSCodeLanguageConfiguration(url: $0) }
 
         let converted = NovaGrammar(
+            configuration: configuration,
             extension: vsCodeExtension!,
             language: language!,
             grammar: grammar,
