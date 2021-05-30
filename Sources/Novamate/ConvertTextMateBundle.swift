@@ -7,12 +7,11 @@ import NovamateKit
 struct ConvertTextMateBundle: ParsableCommand {
     @Argument(help: "Path to .tmbundle file") var bundle: URL
     @Option(help: "Name of language in bundle") var languageName: String?
-    @Option(help: "Scope replacements of the form `from.scope.name:to.scope.name`") var replace = [ScopeReplacement]()
 
-    @Flag(help: "Print debug info to stderr") var debug: Bool = false
+    @OptionGroup var options: Options
 
     func run() throws {
-        Console.debug = debug
+        Console.debug = options.debug
 
         let textMateBundle = try TextMateBundle(url: bundle)
         let grammarURL: URL
@@ -34,7 +33,7 @@ struct ConvertTextMateBundle: ParsableCommand {
         let textmate = try TextMateGrammar(url: grammarURL)
         Console.debug("loaded grammar \(textmate)")
 
-        let converted = NovaGrammar(settings: textMateBundle.settings, textMateGrammar: textmate, replacements: replace)
+        let converted = NovaGrammar(settings: textMateBundle.settings, textMateGrammar: textmate, replacements: options.replace)
         Console.debug("converted \(converted)")
 
         let encoder = XMLEncoder.forNovaGrammar()

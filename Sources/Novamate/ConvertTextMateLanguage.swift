@@ -6,17 +6,16 @@ import NovamateKit
 
 struct ConvertLanguage: ParsableCommand {
     @Argument(help: "Path to .tmLanguage file") var languageFile: URL
-    @Option(help: "Scope replacements of the form `from.scope.name:to.scope.name`") var replace = [ScopeReplacement]()
 
-    @Flag(help: "Print debug info to stderr") var debug: Bool = false
+    @OptionGroup var options: Options
 
     func run() throws {
-        Console.debug = debug
+        Console.debug = options.debug
 
         let textmate = try TextMateGrammar(url: languageFile)
         Console.debug("loaded grammar \(textmate)")
 
-        let converted = NovaGrammar(textMateGrammar: textmate, replacements: replace)
+        let converted = NovaGrammar(textMateGrammar: textmate, replacements: options.replace)
         Console.debug("converted \(converted)")
 
         let encoder = XMLEncoder.forNovaGrammar()

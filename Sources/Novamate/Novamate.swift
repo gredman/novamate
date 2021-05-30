@@ -1,7 +1,16 @@
 import ArgumentParser
 import Foundation
+
+import NovamateKit
+
 private struct ValidationError: LocalizedError {
     let errorDescription: String
+}
+
+struct Options: ParsableArguments {
+    @Option(help: "Scope replacements of the form `from.scope.name:to.scope.name`") var replace = [ScopeReplacement]()
+
+    @Flag(help: "Print debug info to stderr") var debug: Bool = false
 }
 
 struct Novamate: ParsableCommand {
