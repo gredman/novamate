@@ -59,5 +59,5 @@ private func disclaimer(
     extension: VSCodeExtension,
     language: VSCodeExtension.Contributes.Language
 ) -> String {
-        "Converted from \"\(`extension`.repository.url)\", grammar \"\(language.id)\"."
+        "Converted from grammar `\(language.id)` in \(`extension`.repository.url)"
 }
