@@ -25,7 +25,7 @@ public extension TextMateBundle {
     init(url: URL) throws {
         let syntaxURL = URL(fileURLWithPath: "Syntaxes", relativeTo: url)
         grammarURLs = try FileManager.default.contentsOfDirectory(at: syntaxURL, includingPropertiesForKeys: [], options: [])
-        .filter(by: \.pathExtension, equalTo: "tmLanguage")
+            .filter(by: \.pathExtension, equalTo: "tmLanguage")
 
         let preferencesURL = URL(fileURLWithPath: "Preferences", relativeTo: url)
         let preferencesURLs = try FileManager.default.contentsOfDirectory(at: preferencesURL, includingPropertiesForKeys: [], options: [])
