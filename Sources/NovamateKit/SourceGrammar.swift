@@ -1,9 +1,9 @@
 import Foundation
 
-public struct TextMateGrammar: Codable {
+public struct SourceGrammar: Codable {
     public let name: String
     public let scopeName: String
-    public let fileTypes: [String]
+    public let fileTypes: [String]?
 
     public let patterns: [Rule]
     public let repository: [String: Rule]
@@ -37,11 +37,24 @@ public struct TextMateGrammar: Codable {
     }
 }
 
-public extension TextMateGrammar {
+public extension SourceGrammar {
     init(url: URL) throws {
         Console.debug("loading grammar from \(url.absoluteString)")
         let data = try Data(contentsOf: url)
-        self = try PropertyListDecoder().decode(Self.self, from: data)
+        switch url.pathExtension {
+        case "json":
+            Console.debug("decoding JSON")
+            self = try JSONDecoder().decode(Self.self, from: data)
+        case "tmLanguage":
+            Console.debug("decoding plist")
+            self = try PropertyListDecoder().decode(Self.self, from: data)
+        default:
+            throw GrammarError(errorDescription: "unknown file extension: \(url.pathExtension)")
+        }
         Console.debug("grammar loaded")
     }
+}
+
+private struct GrammarError: LocalizedError {
+    let errorDescription: String
 }

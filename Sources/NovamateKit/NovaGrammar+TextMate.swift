@@ -1,31 +1,35 @@
 import Foundation
 
 public extension NovaGrammar {
-    init(settings: TextMateBundle.Settings = .init(), textMateGrammar: TextMateGrammar, replacements: [ScopeReplacement]) {
+    init(settings: TextMateBundle.Settings = .init(), sourceGrammar: SourceGrammar, replacements: [ScopeReplacement]) {
         let brackets = settings.highlightPairs.map { pair in Pairs.Pair(open: pair.0, close: pair.1) }
         let surroundingPairs = settings.smartTypingPairs.map { pair in Pairs.Pair(open: pair.0, close: pair.1) }
 
         Console.debug("converting top level patterns")
         let scopes = [NovaGrammar.Scope](
-            patterns: textMateGrammar.patterns,
-            scopeName: textMateGrammar.scopeName,
+            patterns: sourceGrammar.patterns,
+            scopeName: sourceGrammar.scopeName,
             replacements: replacements)
 
         Console.debug("converting repository")
         let collections = [NovaGrammar.Collections.Collection](
-            repository: textMateGrammar.repository,
-            scopeName: textMateGrammar.scopeName,
+            repository: sourceGrammar.repository,
+            scopeName: sourceGrammar.scopeName,
             replacements: replacements)
 
-        self.init(
-            name: textMateGrammar.name,
-            meta: Meta(
-                name: textMateGrammar.name,
-                preferredFileExtension: textMateGrammar.fileTypes.first,
-                _disclaimer: nil),
-            detectors: Detectors(extension: textMateGrammar.fileTypes.map {
+        let extensionDetectors = sourceGrammar.fileTypes.map {
+            $0.map {
                 Detectors.Extension(priority: 1.0, value: $0)
-            }),
+            }
+        }
+
+        self.init(
+            name: sourceGrammar.name,
+            meta: Meta(
+                name: sourceGrammar.name,
+                preferredFileExtension: sourceGrammar.fileTypes?.first,
+                _disclaimer: nil),
+            detectors: Detectors(extension: extensionDetectors),
             comments: nil,    // TODO
             brackets: Pairs(pair: brackets),
             surroundingPairs: Pairs(pair: surroundingPairs),
@@ -35,13 +39,13 @@ public extension NovaGrammar {
 }
 
 extension Array where Element == NovaGrammar.Scope {
-    init(patterns: [TextMateGrammar.Rule], scopeName: String, replacements: [ScopeReplacement]) {
+    init(patterns: [SourceGrammar.Rule], scopeName: String, replacements: [ScopeReplacement]) {
         self = patterns.compactMap { NovaGrammar.Scope(rule: $0, prefix: scopeName, replacements: replacements) }
     }
 }
 
 extension Array where Element == NovaGrammar.Collections.Collection {
-    init(repository: [String: TextMateGrammar.Rule], scopeName: String, replacements: [ScopeReplacement]) {
+    init(repository: [String: SourceGrammar.Rule], scopeName: String, replacements: [ScopeReplacement]) {
         self = repository
             .sorted(by: \.key)
             .map { keyValue -> NovaGrammar.Collections.Collection in
@@ -54,13 +58,13 @@ extension Array where Element == NovaGrammar.Collections.Collection {
     }
 }
 
-private extension TextMateGrammar.Rule {
-    func expandedPatterns(replacements: [ScopeReplacement]) -> [TextMateGrammar.Rule] {
+private extension SourceGrammar.Rule {
+    func expandedPatterns(replacements: [ScopeReplacement]) -> [SourceGrammar.Rule] {
         guard match == nil, begin == nil, end == nil, include == nil else {
             return [self]
         }
 
-        let renamedPatterns = (patterns ?? []).enumerated().map { (n, p) -> TextMateGrammar.Rule in
+        let renamedPatterns = (patterns ?? []).enumerated().map { (n, p) -> SourceGrammar.Rule in
             var renamed = p
             renamed.name = p.name ?? name.map { "\($0).\(n)" }
             renamed.name = renamed.name?.applying(replacements: replacements)
@@ -71,7 +75,7 @@ private extension TextMateGrammar.Rule {
 }
 
 private extension NovaGrammar.Scope {
-    init?(rule: TextMateGrammar.Rule, prefix: String, replacements: [ScopeReplacement]) {
+    init?(rule: SourceGrammar.Rule, prefix: String, replacements: [ScopeReplacement]) {
         Console.debug("converting \(rule)")
 
         if let match = rule.match, rule.begin == nil, rule.end == nil, rule.include == nil {
@@ -101,7 +105,7 @@ private extension NovaGrammar.Scope {
 }
 
 private extension NovaGrammar.Scope.Pattern {
-    init(expression: String, captures: [Int: TextMateGrammar.Rule.Capture]?, prefix: String, replacements: [ScopeReplacement]) {
+    init(expression: String, captures: [Int: SourceGrammar.Rule.Capture]?, prefix: String, replacements: [ScopeReplacement]) {
         let capture = captures?.sorted(by: \.key).map { keyValue in
             Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.applying(replacements: replacements) })
         }
@@ -110,7 +114,7 @@ private extension NovaGrammar.Scope.Pattern {
 }
 
 private extension NovaGrammar.Scope.Match {
-    init(name: String?, expression: String, captures: [Int: TextMateGrammar.Rule.Capture]?, prefix: String, replacements: [ScopeReplacement]) {
+    init(name: String?, expression: String, captures: [Int: SourceGrammar.Rule.Capture]?, prefix: String, replacements: [ScopeReplacement]) {
         let name = name.map { prefix + "." + $0 }
         let capture = captures?.sorted(by: \.key).map { keyValue in
             Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.applying(replacements: replacements) })

@@ -3,7 +3,7 @@ public extension NovaGrammar {
         configuration: VSCodeLanguageConfiguration?,
         extension: VSCodeExtension,
         language: VSCodeExtension.Contributes.Language,
-        grammar: VSCodeGrammar,
+        grammar: SourceGrammar,
         replacements: [ScopeReplacement]
     ) {
         Console.debug("converting top level patterns")

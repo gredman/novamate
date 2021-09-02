@@ -56,7 +56,7 @@ struct ConvertVSCodeExtension: ParsableCommand {
 
         let grammarURL = self.grammarURL!
         Console.debug("loading grammar from \(grammarURL)")
-        let grammar = try VSCodeGrammar(url: grammarURL)
+        let grammar = try SourceGrammar(url: grammarURL)
         Console.debug("loaded grammar \(grammar)")
         let configuration = try configurationURL.map { try VSCodeLanguageConfiguration(url: $0) }
 

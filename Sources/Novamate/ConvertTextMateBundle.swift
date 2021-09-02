@@ -31,10 +31,10 @@ struct ConvertTextMateBundle: ParsableCommand {
             grammarURL = textMateBundle.grammarURLs.first!
         }
 
-        let textmate = try TextMateGrammar(url: grammarURL)
+        let textmate = try SourceGrammar(url: grammarURL)
         Console.debug("loaded grammar \(textmate)")
 
-        let converted = NovaGrammar(settings: textMateBundle.settings, textMateGrammar: textmate, replacements: options.replace)
+        let converted = NovaGrammar(settings: textMateBundle.settings, sourceGrammar: textmate, replacements: options.replace)
         Console.debug("converted \(converted)")
 
         let encoder = XMLEncoder.forNovaGrammar()
