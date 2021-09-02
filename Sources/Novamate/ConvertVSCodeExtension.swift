@@ -77,6 +77,6 @@ struct ConvertVSCodeExtension: ParsableCommand {
 private extension VSCodeExtension {
     var formattedLanguageNames: String? {
         guard let names = contributes?.languages else { return nil }
-        return ListFormatter().string(from: names)
+        return ListFormatter().string(from: names.map(\.id))
     }
 }
