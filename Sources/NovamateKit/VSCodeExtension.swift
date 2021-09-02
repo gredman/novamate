@@ -15,7 +15,7 @@ public struct VSCodeExtension: Codable {
 
         public struct Language: Codable {
             public let id: String
-            public let extensions: [String]
+            public let extensions: [String]?
             public let configuration: String?
         }
 

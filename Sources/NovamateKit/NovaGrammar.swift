@@ -34,7 +34,7 @@ public struct NovaGrammar: Encodable {
     }
 
     public struct Detectors: Encodable {
-        let `extension`: [Extension]
+        let `extension`: [Extension]?
 
         public struct Extension: Encodable, DynamicNodeEncoding {
             let priority: Double

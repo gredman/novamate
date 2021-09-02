@@ -38,15 +38,19 @@ public extension NovaGrammar {
                 })
         }
 
+        let extensionDetectors = language.extensions.map {
+            $0.map {
+                Detectors.Extension(priority: 1.0, value: $0)
+            }
+        }
+
         self.init(
             name: grammar.name,
             meta: Meta(
                 name: grammar.name,
-                preferredFileExtension: language.extensions.first,
+                preferredFileExtension: language.extensions?.first,
                 _disclaimer: disclaimer(extension: `extension`, language: language)),
-            detectors: Detectors(extension: language.extensions.map {
-                Detectors.Extension(priority: 1.0, value: $0)
-            }),
+            detectors: Detectors(extension: extensionDetectors),
             comments: comments,
             brackets: Pairs(pair: brackets),
             surroundingPairs: Pairs(pair: surroundingPairs),
