@@ -57,7 +57,7 @@ struct ConvertVSCodeExtension: ParsableCommand {
         let grammarURL = self.grammarURL!
         Console.debug("loading grammar from \(grammarURL)")
         let grammar = try SourceGrammar(url: grammarURL)
-        Console.debug("loaded grammar \(grammar)")
+        Console.debug("loaded grammar", grammar)
         let configuration = try configurationURL.map { try VSCodeLanguageConfiguration(url: $0) }
 
         let converted = NovaGrammar(
@@ -66,7 +66,7 @@ struct ConvertVSCodeExtension: ParsableCommand {
             language: language!,
             grammar: grammar,
             replacements: options.replace)
-        Console.debug("converted grammar \(converted)")
+        Console.debug("converted grammar", converted)
 
         let encoder = XMLEncoder.forNovaGrammar()
         let data = try encoder.encode(converted, withRootKey: "syntax")

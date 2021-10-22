@@ -76,7 +76,7 @@ private extension SourceGrammar.Rule {
 
 private extension NovaGrammar.Scope {
     init?(rule: SourceGrammar.Rule, prefix: String, replacements: [ScopeReplacement]) {
-        Console.debug("converting \(rule)")
+        Console.debug("converting", rule)
 
         if let match = rule.match, rule.begin == nil, rule.end == nil, rule.include == nil {
             let name = rule.name?.applying(replacements: replacements)
@@ -101,6 +101,8 @@ private extension NovaGrammar.Scope {
             Console.error("unhandled rule \(rule)")
             return nil
         }
+
+        Console.debug("converted", self)
     }
 }
 
