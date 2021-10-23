@@ -14,6 +14,16 @@ public struct Console {
         FileHandle.standardError.write("\n")
     }
 
+    public static func error(_ string: String, _ object: Any) {
+        FileHandle.standardError.write("***")
+        FileHandle.standardError.write(string)
+        FileHandle.standardError.write("\n")
+        var output = ""
+        dump(object, to: &output, indent: 1)
+        FileHandle.standardError.write(output)
+        FileHandle.standardError.write("]\n\n")
+    }
+
     public static func debug(_ string: String) {
         guard debug else { return }
         FileHandle.standardError.write("[")

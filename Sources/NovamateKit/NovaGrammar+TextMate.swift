@@ -118,8 +118,11 @@ private extension NovaGrammar.Scope.Pattern {
 private extension NovaGrammar.Scope.Match {
     init(name: String?, expression: String, captures: [Int: SourceGrammar.Rule.Capture]?, prefix: String, replacements: [ScopeReplacement]) {
         let name = name.map { prefix + "." + $0 }
-        let capture = captures?.sorted(by: \.key).map { keyValue in
-            Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.applying(replacements: replacements) })
+        let capture = captures?.sorted(by: \.key).map { keyValue -> Capture in
+            if keyValue.value.patterns?.isEmpty == false {
+                Console.error("nested patterns discarded", keyValue.value)
+            }
+            return Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.applying(replacements: replacements) })
         }
         self.init(name: name, expression: expression, capture: capture)
     }
