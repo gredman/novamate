@@ -45,9 +45,9 @@ extension Array where Element == NovaGrammar.Scope {
 }
 
 extension Array where Element == NovaGrammar.Collections.Collection {
-    init(repository: [String: SourceGrammar.Rule], scopeName: ScopeName, replacements: [ScopeReplacement]) {
+    init(repository: SourceGrammar.Repository, scopeName: ScopeName, replacements: [ScopeReplacement]) {
         self = repository
-            .sorted(by: \.key)
+            .sorted(by: \.key.rawValue)
             .map { keyValue -> NovaGrammar.Collections.Collection in
                 let rules = keyValue.value.expandedPatterns(replacements: replacements)
                 let scopes = rules.compactMap { rule -> NovaGrammar.Scope? in

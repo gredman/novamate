@@ -80,11 +80,11 @@ public struct NovaGrammar: Encodable {
         public let collection: [Collection]
 
         public struct Collection: Encodable, DynamicNodeEncoding {
-            let name: String
+            let name: RuleName
             let scope: [Scope]?
             let include: [Scope]?
 
-            init(name: String, scopes: [Scope]) {
+            init(name: RuleName, scopes: [Scope]) {
                 self.name = name
                 scope = scopes.filter(\.isScope)
                 include = scopes.filter(\.isInclude)

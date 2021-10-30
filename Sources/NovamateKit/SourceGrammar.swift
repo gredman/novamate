@@ -6,7 +6,9 @@ public struct SourceGrammar: Codable {
     public let fileTypes: [String]?
 
     public let patterns: [Rule]
-    public let repository: [String: Rule]
+    @DictionaryCoded public var repository: Repository
+
+    public typealias Repository = [RuleName: Rule]
 
     public struct Rule: Codable {
         var name: ScopeName?
@@ -63,5 +65,52 @@ public struct ScopeName: Codable, Equatable, Hashable, RawRepresentable {
 
     public init(rawValue: String) {
         self.rawValue = rawValue
+    }
+}
+
+public struct RuleName: Codable, Equatable, Hashable, LosslessStringConvertible, RawRepresentable {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init?(_ description: String) {
+        rawValue = description
+    }
+
+    public var description: String { rawValue }
+}
+
+@propertyWrapper
+public struct DictionaryCoded<Key, Value>: Codable where Key: LosslessStringConvertible, Key: Hashable, Value: Codable {
+    public let wrappedValue: [Key: Value]
+
+    struct CodingKeys: CodingKey {
+        public let intValue: Int? = nil
+        public let stringValue: String
+        public init?(stringValue: String) {
+            self.stringValue = stringValue
+        }
+        public init?(intValue: Int) {
+            return nil
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        for keyValue in wrappedValue {
+            try container.encode(keyValue.value, forKey: CodingKeys(stringValue: keyValue.key.description)!)
+        }
+    }
+
+    public init(from decoder: Decoder) throws {
+        var result = [Key: Value]()
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        for key in container.allKeys {
+            let value = try container.decode(Value.self, forKey: key)
+            result[Key(key.stringValue)!] = value
+        }
+        wrappedValue = result
     }
 }
