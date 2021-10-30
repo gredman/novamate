@@ -146,7 +146,7 @@ public struct NovaGrammar: Encodable {
 
             public struct Capture: Encodable, DynamicNodeEncoding {
                 let number: Int
-                let name: String?
+                let name: ScopeName?
 
                 public static func nodeEncoding(for key: CodingKey) -> XMLEncoder.NodeEncoding {
                     .attribute
@@ -155,7 +155,7 @@ public struct NovaGrammar: Encodable {
         }
 
         public struct Match: Encodable, DynamicNodeEncoding {
-            let name: String?
+            let name: ScopeName?
             @SanitizedExpression var expression: String
             let capture: [Capture]?
 
@@ -168,7 +168,7 @@ public struct NovaGrammar: Encodable {
 
             public struct Capture: Encodable, DynamicNodeEncoding {
                 let number: Int
-                let name: String?
+                let name: ScopeName?
 
                 public static func nodeEncoding(for key: CodingKey) -> XMLEncoder.NodeEncoding {
                     .attribute
@@ -177,7 +177,7 @@ public struct NovaGrammar: Encodable {
         }
 
         public struct StartEnd: Encodable, DynamicNodeEncoding {
-            let name: String?
+            let name: ScopeName?
             let startsWith: Pattern
             let endsWith: Pattern
             let subscopes: Scopes

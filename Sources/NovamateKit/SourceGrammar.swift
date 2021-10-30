@@ -2,22 +2,21 @@ import Foundation
 
 public struct SourceGrammar: Codable {
     public let name: String
-    public let scopeName: String
+    public let scopeName: ScopeName
     public let fileTypes: [String]?
 
     public let patterns: [Rule]
     public let repository: [String: Rule]
 
     public struct Rule: Codable {
-        var name: String?
-        let contentName: String?
+        var name: ScopeName?
         let match, begin, end: String?
         let captures, beginCaptures, endCaptures: [Int: Capture]?
         let patterns: [Rule]?
         let include: String?
 
         public struct Capture: Codable {
-            let name: String?
+            let name: ScopeName?
             let patterns: [Rule]?
         }
 
@@ -57,4 +56,12 @@ public extension SourceGrammar {
 
 private struct GrammarError: LocalizedError {
     let errorDescription: String
+}
+
+public struct ScopeName: Codable, Equatable, Hashable, RawRepresentable {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
 }

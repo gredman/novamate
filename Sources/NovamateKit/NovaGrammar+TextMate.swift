@@ -39,13 +39,13 @@ public extension NovaGrammar {
 }
 
 extension Array where Element == NovaGrammar.Scope {
-    init(patterns: [SourceGrammar.Rule], scopeName: String, replacements: [ScopeReplacement]) {
+    init(patterns: [SourceGrammar.Rule], scopeName: ScopeName, replacements: [ScopeReplacement]) {
         self = patterns.compactMap { NovaGrammar.Scope(rule: $0, prefix: scopeName, replacements: replacements) }
     }
 }
 
 extension Array where Element == NovaGrammar.Collections.Collection {
-    init(repository: [String: SourceGrammar.Rule], scopeName: String, replacements: [ScopeReplacement]) {
+    init(repository: [String: SourceGrammar.Rule], scopeName: ScopeName, replacements: [ScopeReplacement]) {
         self = repository
             .sorted(by: \.key)
             .map { keyValue -> NovaGrammar.Collections.Collection in
@@ -66,7 +66,7 @@ private extension SourceGrammar.Rule {
 
         let renamedPatterns = (patterns ?? []).enumerated().map { (n, p) -> SourceGrammar.Rule in
             var renamed = p
-            renamed.name = p.name ?? name.map { "\($0).\(n)" }
+            renamed.name = p.name ?? name.map { ScopeName(rawValue: "\($0).\(n)") }
             renamed.name = renamed.name?.applying(replacements: replacements)
             return renamed
         }
@@ -75,7 +75,7 @@ private extension SourceGrammar.Rule {
 }
 
 private extension NovaGrammar.Scope {
-    init?(rule: SourceGrammar.Rule, prefix: String, replacements: [ScopeReplacement]) {
+    init?(rule: SourceGrammar.Rule, prefix: ScopeName, replacements: [ScopeReplacement]) {
         Console.debug("converting", rule)
 
         if let match = rule.match, rule.begin == nil, rule.end == nil, rule.include == nil {
@@ -88,7 +88,7 @@ private extension NovaGrammar.Scope {
                 replacements: replacements)
             self = .match(match)
         } else if let begin = rule.begin, let end = rule.end, rule.match == nil, rule.include == nil {
-            let name = rule.name.map { prefix + "." + $0 }?.applying(replacements: replacements)
+            let name = rule.name.map { $0.prepending(prefix) }?.applying(replacements: replacements)
             let startsWith = Pattern(expression: begin, captures: rule.beginCaptures, prefix: prefix, replacements: replacements)
             let endsWith = Pattern(expression: end, captures: rule.endCaptures, prefix: prefix, replacements: replacements)
             let subscopes = (rule.patterns ?? []).compactMap {
@@ -107,35 +107,42 @@ private extension NovaGrammar.Scope {
 }
 
 private extension NovaGrammar.Scope.Pattern {
-    init(expression: String, captures: [Int: SourceGrammar.Rule.Capture]?, prefix: String, replacements: [ScopeReplacement]) {
+    init(expression: String, captures: [Int: SourceGrammar.Rule.Capture]?, prefix: ScopeName, replacements: [ScopeReplacement]) {
         let capture = captures?.sorted(by: \.key).map { keyValue in
-            Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.applying(replacements: replacements) })
+            Capture(number: keyValue.key, name: keyValue.value.name.map { scopeName -> ScopeName in
+                scopeName.applying(replacements: replacements).prepending(prefix)
+            })
         }
         self.init(expression: expression, capture: capture)
     }
 }
 
 private extension NovaGrammar.Scope.Match {
-    init(name: String?, expression: String, captures: [Int: SourceGrammar.Rule.Capture]?, prefix: String, replacements: [ScopeReplacement]) {
-        let name = name.map { prefix + "." + $0 }
+    init(name: ScopeName?, expression: String, captures: [Int: SourceGrammar.Rule.Capture]?, prefix: ScopeName, replacements: [ScopeReplacement]) {
+        let name = name.map { $0.prepending(prefix) }
         let capture = captures?.sorted(by: \.key).map { keyValue -> Capture in
             if keyValue.value.patterns?.isEmpty == false {
                 Console.error("nested patterns discarded", keyValue.value)
             }
-            return Capture(number: keyValue.key, name: keyValue.value.name.map { prefix + "." + $0.applying(replacements: replacements) })
+            return Capture(number: keyValue.key, name: keyValue.value.name.map { $0.applying(replacements: replacements).prepending(prefix) })
         }
         self.init(name: name, expression: expression, capture: capture)
     }
 }
 
-private extension String {
+private extension ScopeName {
     private var groups: [Substring] {
-        split(separator: ".")
+        rawValue.split(separator: ".")
     }
 
-    func applying(replacements: [ScopeReplacement]) -> String {
-        replacements.reduce(self) { result, replacement in
+    func applying(replacements: [ScopeReplacement]) -> ScopeName {
+        let rawValue = replacements.reduce(self.rawValue) { result, replacement in
             result.replacingOccurrences(of: replacement.from, with: replacement.to)
         }
+        return ScopeName(rawValue: rawValue)
+    }
+
+    func prepending(_ prefix: ScopeName) -> ScopeName {
+        ScopeName(rawValue: prefix.rawValue + "." + rawValue)
     }
 }
