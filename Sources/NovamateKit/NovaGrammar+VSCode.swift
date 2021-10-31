@@ -5,16 +5,10 @@ public extension NovaGrammarBuilder {
         language: VSCodeExtension.Contributes.Language
     ) -> NovaGrammar {
         Console.debug("converting top level patterns")
-        let scopes = [NovaGrammar.Scope](
-            patterns: sourceGrammar.patterns,
-            scopeName: sourceGrammar.scopeName,
-            replacements: replacements)
+        let scopes = self.scopes()
 
         Console.debug("converting repository")
-        let collections = [NovaGrammar.Collections.Collection](
-            repository: sourceGrammar.repository,
-            scopeName: sourceGrammar.scopeName,
-            replacements: replacements)
+        let collections = self.collections()
 
         let brackets = (configuration?.brackets ?? [])
             .map {
