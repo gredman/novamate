@@ -1,9 +1,13 @@
 import Foundation
 
-public extension NovaGrammar {
-    init(settings: TextMateBundle.Settings = .init(), sourceGrammar: SourceGrammar, replacements: [ScopeReplacement]) {
-        let brackets = settings.highlightPairs.map { pair in Pairs.Pair(open: pair.0, close: pair.1) }
-        let surroundingPairs = settings.smartTypingPairs.map { pair in Pairs.Pair(open: pair.0, close: pair.1) }
+public extension NovaGrammarBuilder {
+    func fromTextMate(settings: TextMateBundle.Settings = .init()) -> NovaGrammar {
+        let brackets = settings.highlightPairs.map { pair in
+            NovaGrammar.Pairs.Pair(open: pair.0, close: pair.1)
+        }
+        let surroundingPairs = settings.smartTypingPairs.map {
+            pair in NovaGrammar.Pairs.Pair(open: pair.0, close: pair.1)
+        }
 
         Console.debug("converting top level patterns")
         let scopes = [NovaGrammar.Scope](
@@ -19,22 +23,22 @@ public extension NovaGrammar {
 
         let extensionDetectors = sourceGrammar.fileTypes.map {
             $0.map {
-                Detectors.Extension(priority: 1.0, value: $0)
+                NovaGrammar.Detectors.Extension(priority: 1.0, value: $0)
             }
         }
 
-        self.init(
+        return NovaGrammar(
             name: sourceGrammar.name,
-            meta: Meta(
+            meta: NovaGrammar.Meta(
                 name: sourceGrammar.name,
                 preferredFileExtension: sourceGrammar.fileTypes?.first,
                 _disclaimer: nil),
-            detectors: Detectors(extension: extensionDetectors),
+            detectors: NovaGrammar.Detectors(extension: extensionDetectors),
             comments: nil,    // TODO
-            brackets: Pairs(pair: brackets),
-            surroundingPairs: Pairs(pair: surroundingPairs),
-            scopes: Scopes(scopes: scopes),
-            collections: Collections(collection: collections))
+            brackets: NovaGrammar.Pairs(pair: brackets),
+            surroundingPairs: NovaGrammar.Pairs(pair: surroundingPairs),
+            scopes: NovaGrammar.Scopes(scopes: scopes),
+            collections: NovaGrammar.Collections(collection: collections))
     }
 }
 

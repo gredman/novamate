@@ -16,7 +16,8 @@ struct ConvertTextMateLanguage: ParsableCommand {
         let textmate = try SourceGrammar(url: languageFile)
         Console.debug("loaded grammar", textmate)
 
-        let converted = NovaGrammar(sourceGrammar: textmate, replacements: options.replace)
+        let builder = NovaGrammarBuilder(sourceGrammar: textmate, replacements: options.replace)
+        let converted = builder.fromTextMate()
         Console.debug("converted", converted)
 
         let encoder = XMLEncoder.forNovaGrammar()

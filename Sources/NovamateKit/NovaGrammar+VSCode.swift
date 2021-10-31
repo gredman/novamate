@@ -1,61 +1,59 @@
-public extension NovaGrammar {
-    init(
+public extension NovaGrammarBuilder {
+    func fromVSCode(
         configuration: VSCodeLanguageConfiguration?,
         extension: VSCodeExtension,
-        language: VSCodeExtension.Contributes.Language,
-        grammar: SourceGrammar,
-        replacements: [ScopeReplacement]
-    ) {
+        language: VSCodeExtension.Contributes.Language
+    ) -> NovaGrammar {
         Console.debug("converting top level patterns")
         let scopes = [NovaGrammar.Scope](
-            patterns: grammar.patterns,
-            scopeName: grammar.scopeName,
+            patterns: sourceGrammar.patterns,
+            scopeName: sourceGrammar.scopeName,
             replacements: replacements)
 
         Console.debug("converting repository")
         let collections = [NovaGrammar.Collections.Collection](
-            repository: grammar.repository,
-            scopeName: grammar.scopeName,
+            repository: sourceGrammar.repository,
+            scopeName: sourceGrammar.scopeName,
             replacements: replacements)
 
         let brackets = (configuration?.brackets ?? [])
             .map {
-                Pairs.Pair(open: $0.first, close: $0.last)
+                NovaGrammar.Pairs.Pair(open: $0.first, close: $0.last)
             }
 
         let surroundingPairs = (configuration?.surroundingPairs ?? [])
             .map {
-                Pairs.Pair(open: $0.first, close: $0.last)
+                NovaGrammar.Pairs.Pair(open: $0.first, close: $0.last)
             }
 
         let comments = configuration.map(\.comments).map {
-            Comments(
-                single: $0.lineComment.map(Comments.Expression.init(expression:)),
+            NovaGrammar.Comments(
+                single: $0.lineComment.map(NovaGrammar.Comments.Expression.init(expression:)),
                 multiline: $0.blockComment.map {
-                    Comments.Multiline(
-                        startsWith: Comments.Expression(expression: $0.first),
-                        endsWith: Comments.Expression(expression: $0.last))
+                    NovaGrammar.Comments.Multiline(
+                        startsWith: NovaGrammar.Comments.Expression(expression: $0.first),
+                        endsWith: NovaGrammar.Comments.Expression(expression: $0.last))
                 })
         }
 
         let extensionDetectors = language.extensions.map {
             $0.map {
-                Detectors.Extension(priority: 1.0, value: $0)
+                NovaGrammar.Detectors.Extension(priority: 1.0, value: $0)
             }
         }
 
-        self.init(
-            name: grammar.name,
-            meta: Meta(
-                name: grammar.name,
+        return NovaGrammar(
+            name: sourceGrammar.name,
+            meta: NovaGrammar.Meta(
+                name: sourceGrammar.name,
                 preferredFileExtension: language.extensions?.first,
                 _disclaimer: disclaimer(extension: `extension`, language: language)),
-            detectors: Detectors(extension: extensionDetectors),
+            detectors: NovaGrammar.Detectors(extension: extensionDetectors),
             comments: comments,
-            brackets: Pairs(pair: brackets),
-            surroundingPairs: Pairs(pair: surroundingPairs),
-            scopes: Scopes(scopes: scopes),
-            collections: Collections(collection: collections))
+            brackets: NovaGrammar.Pairs(pair: brackets),
+            surroundingPairs: NovaGrammar.Pairs(pair: surroundingPairs),
+            scopes: NovaGrammar.Scopes(scopes: scopes),
+            collections: NovaGrammar.Collections(collection: collections))
     }
 }
 
