@@ -12,7 +12,7 @@ public struct NovaGrammarBuilder {
     }
 
     func scopes() -> [NovaGrammar.Scope] {
-        sourceGrammar.patterns.compactMap(self.scope(rule:))
+        sourceGrammar.patterns.compactMap(scope(rule:))
     }
 
     func scope(rule: SourceGrammar.Rule) -> NovaGrammar.Scope? {
@@ -21,22 +21,11 @@ public struct NovaGrammarBuilder {
         let converted: NovaGrammar.Scope?
 
         if let match = rule.match, rule.begin == nil, rule.end == nil, rule.include == nil {
-            let name = rule.name?.applying(replacements: replacements)
-            let match = self.match(
-                name: name,
-                expression: match,
-                captures: rule.captures)
-            converted = .match(match)
+            converted = matchScope(rule: rule, match: match)
         } else if let begin = rule.begin, let end = rule.end, rule.match == nil, rule.include == nil {
-            let name = rule.name.map { $0.prepending(prefix) }?.applying(replacements: replacements)
-            let startsWith = pattern(expression: begin, captures: rule.beginCaptures)
-            let endsWith = pattern(expression: end, captures: rule.endCaptures)
-            let subscopes = (rule.patterns ?? []).compactMap {
-                self.scope(rule: $0)
-            }
-            converted = .startEnd(.init(name: name, startsWith: startsWith, endsWith: endsWith, subscopes: NovaGrammar.Scopes(scopes: subscopes)))
+            converted = startEndScope(rule: rule, begin: begin, end: end)
         } else if let include = rule.include, rule.match == nil, rule.end == nil {
-            converted = .include(.init(collection: include))
+            converted = includeScope(rule: rule, include: include)
         } else {
             Console.error("unhandled rule \(rule)")
             converted = nil
@@ -46,38 +35,80 @@ public struct NovaGrammarBuilder {
         return converted
     }
 
+    func matchScope(rule: SourceGrammar.Rule, match: String) -> NovaGrammar.Scope {
+        let name = rule.name?.applying(replacements: replacements)
+            let match = self.match(
+                name: name,
+                expression: match,
+                captures: rule.captures)
+        return .match(match)
+    }
+
+    func startEndScope(rule: SourceGrammar.Rule, begin: String, end: String) -> NovaGrammar.Scope {
+        let name = rule.name.map { $0.prepending(prefix) }?.applying(replacements: replacements)
+        let startsWith = pattern(expression: begin, captures: rule.beginCaptures)
+        let endsWith = pattern(expression: end, captures: rule.endCaptures)
+        let subscopes = (rule.patterns ?? []).compactMap(scope(rule:))
+        let startEnd = NovaGrammar.Scope.StartEnd(
+            name: name,
+            startsWith: startsWith,
+            endsWith: endsWith,
+            subscopes: NovaGrammar.Scopes(scopes: subscopes))
+        return .startEnd(startEnd)
+    }
+
+    func includeScope(rule: SourceGrammar.Rule, include: String) -> NovaGrammar.Scope {
+        return .include(NovaGrammar.Include(collection: include))
+    }
+
     func collections() -> [NovaGrammar.Collections.Collection] {
         sourceGrammar.repository
             .sorted(by: \.key.rawValue)
             .map { keyValue -> NovaGrammar.Collections.Collection in
                 let rules = keyValue.value.expandedPatterns(replacements: replacements)
-                let scopes = rules.compactMap(self.scope(rule:))
+                let scopes = rules.compactMap(scope(rule:))
                 return NovaGrammar.Collections.Collection(name: keyValue.key, scopes: scopes)
             }
     }
 
     func pattern(expression: String, captures: [Int: SourceGrammar.Rule.Capture]?) -> NovaGrammar.Scope.Pattern {
-        let capture = captures?.sorted(by: \.key).map { keyValue -> NovaGrammar.Scope.Pattern.Capture in
-            let name = keyValue.value.name.map { scopeName -> ScopeName in
-                scopeName.applying(replacements: replacements).prepending(self.prefix)
-            }
-            return NovaGrammar.Scope.Pattern.Capture(number: keyValue.key, name: name)
-        }
+        let capture = captures.map(patternCaptures(sourceCaptures:))
         return NovaGrammar.Scope.Pattern(expression: expression, capture: capture)
+    }
+
+    func patternCaptures(sourceCaptures: [Int: SourceGrammar.Rule.Capture]) -> [NovaGrammar.Scope.Pattern.Capture] {
+        sourceCaptures.sorted(by: \.key).map { keyValue in
+            patternCapture(number: keyValue.key, sourceCapture: keyValue.value)
+        }
+    }
+
+    func patternCapture(number: Int, sourceCapture: SourceGrammar.Rule.Capture) -> NovaGrammar.Scope.Pattern.Capture {
+        let name = sourceCapture.name.map { scopeName -> ScopeName in
+            scopeName.applying(replacements: replacements).prepending(prefix)
+        }
+        return NovaGrammar.Scope.Pattern.Capture(number: number, name: name)
     }
 
     func match(name: ScopeName?, expression: String, captures: [Int: SourceGrammar.Rule.Capture]?) -> NovaGrammar.Scope.Match {
         let name = name.map { $0.prepending(prefix) }
-        let capture = captures?.sorted(by: \.key).map { keyValue -> NovaGrammar.Scope.Match.Capture in
-            if keyValue.value.patterns?.isEmpty == false {
-                Console.error("nested patterns discarded", keyValue.value)
-            }
-            let name = keyValue.value.name.map { scopeName -> ScopeName in
-                scopeName.applying(replacements: replacements).prepending(self.prefix)
-            }
-            return NovaGrammar.Scope.Match.Capture(number: keyValue.key, name: name)
-        }
+        let capture = captures.map(matchCaptures(sourceCaptures:))
         return NovaGrammar.Scope.Match(name: name, expression: expression, capture: capture)
+    }
+
+    func matchCaptures(sourceCaptures: [Int: SourceGrammar.Rule.Capture]) -> [NovaGrammar.Scope.Match.Capture] {
+        sourceCaptures.sorted(by: \.key).map { keyValue in
+            matchCapture(number: keyValue.key, sourceCapture: keyValue.value)
+        }
+    }
+
+    func matchCapture(number: Int, sourceCapture: SourceGrammar.Rule.Capture) -> NovaGrammar.Scope.Match.Capture {
+        if sourceCapture.patterns?.isEmpty == false {
+            Console.error("nested patterns discarded", sourceCapture)
+        }
+        let name = sourceCapture.name.map { scopeName -> ScopeName in
+            scopeName.applying(replacements: replacements).prepending(prefix)
+        }
+        return NovaGrammar.Scope.Match.Capture(number: number, name: name)
     }
 }
 
