@@ -103,12 +103,16 @@ public struct NovaGrammarBuilder {
 
     func matchCapture(number: Int, sourceCapture: SourceGrammar.Rule.Capture) -> NovaGrammar.Scope.Match.Capture {
         if sourceCapture.patterns?.isEmpty == false {
-            Console.error("nested patterns discarded", sourceCapture)
+            Console.debug("nested patterns discarded", sourceCapture)
         }
 
-        var name = sourceCapture.name ?? sourceCapture.inferredName
+        var name = sourceCapture.name ?? inferredName(for: sourceCapture)
         name = name.map { scopeName -> ScopeName in
             scopeName.applying(replacements: replacements).prepending(prefix)
+        }
+
+        if name == nil {
+            Console.error("no name found for capture", sourceCapture)
         }
 
         return NovaGrammar.Scope.Match.Capture(number: number, name: name)

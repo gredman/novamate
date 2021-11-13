@@ -1,18 +1,28 @@
-public extension SourceGrammar.Rule.Capture {
-    var inferredName: ScopeName? {
-        if let name = name {
+import Foundation
+
+extension NovaGrammarBuilder {
+    func inferredName(for capture: SourceGrammar.Rule.Capture) -> ScopeName? {
+        if let name = capture.name {
             return name
         }
 
-        guard let patterns = patterns, patterns.isEmpty == false else {
+        guard let patterns = capture.patterns, patterns.isEmpty == false else {
             return nil
         }
 
-        if patterns.count == 1, let name = patterns.first?.name {
+        let names = patterns.compactMap { pattern -> ScopeName? in
+            self.inferredName(for: pattern)
+        }
+
+        if names.isEmpty {
+            return nil
+        }
+
+        if names.count == 1, let name = names.first {
+            Console.debug("inferred scope name \(name)")
             return name
         }
 
-        let names = patterns.compactMap(\.name)
         let prefix = names.commonPrefix
         let suffix = names.commonSuffix
         if !prefix.isEmpty || !suffix.isEmpty {
@@ -23,20 +33,41 @@ public extension SourceGrammar.Rule.Capture {
 
         return nil
     }
+
+    func inferredName(for rule: SourceGrammar.Rule) -> ScopeName? {
+        if let name = rule.name {
+            return name
+        }
+
+        guard let include = rule.include else {
+            return nil
+        }
+
+        let ruleName = RuleName(rawValue: include.trimmingCharacters(in: CharacterSet(charactersIn: "#")))
+        guard let rule = sourceGrammar.repository[ruleName] else {
+            return nil
+        }
+
+        guard let name = rule.name else {
+            return inferredName(for: rule)
+        }
+
+        return name
+    }
 }
 
 private extension ScopeName {
-    init(components: [Substring]) {
+    init(components: [String]) {
         rawValue = components.joined(separator: ".")
     }
 
-    var components: [Substring] {
-        rawValue.split(separator: ".")
+    var components: [String] {
+        rawValue.split(separator: ".").map(String.init)
     }
 }
 
 private extension Collection where Element == ScopeName {
-    var commonPrefix: [Substring] {
+    var commonPrefix: [String] {
         guard let first = first else { return [] }
 
         let firstComponents = first.components
@@ -45,7 +76,7 @@ private extension Collection where Element == ScopeName {
             return firstComponents
         }
 
-        var prefix = [Substring]()
+        var prefix = [String]()
         for index in firstComponents.indices {
             guard otherComponents.allSatisfy({ $0.count > index }) else { break }
             guard otherComponents.allSatisfy({ $0[index] == firstComponents[index] }) else { break }
@@ -55,7 +86,7 @@ private extension Collection where Element == ScopeName {
         return prefix
     }
 
-    var commonSuffix: AnyCollection<Substring> {
+    var commonSuffix: AnyCollection<String> {
         guard let first = first else { return AnyCollection([]) }
 
         let firstComponents = Array(first.components.reversed())
@@ -64,7 +95,7 @@ private extension Collection where Element == ScopeName {
             return AnyCollection(firstComponents)
         }
 
-        var suffix = [Substring]()
+        var suffix = [String]()
         for index in firstComponents.indices {
             guard otherComponents.allSatisfy({ $0.count > index }) else { break }
             guard otherComponents.allSatisfy({ $0[index] == firstComponents[index] }) else {
