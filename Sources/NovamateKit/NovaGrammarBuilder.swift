@@ -105,9 +105,12 @@ public struct NovaGrammarBuilder {
         if sourceCapture.patterns?.isEmpty == false {
             Console.error("nested patterns discarded", sourceCapture)
         }
-        let name = sourceCapture.name.map { scopeName -> ScopeName in
+
+        var name = sourceCapture.name ?? sourceCapture.inferredName
+        name = name.map { scopeName -> ScopeName in
             scopeName.applying(replacements: replacements).prepending(prefix)
         }
+
         return NovaGrammar.Scope.Match.Capture(number: number, name: name)
     }
 }
